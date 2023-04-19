@@ -10,7 +10,7 @@ char* get_formatted_timestamp() {
     time_info = localtime(&current_time);
 
     // Format time string
-    strftime(time_str, sizeof(char) * 50, "%m/%d/%Y - %I:%M:%S %p", time_info);
+    strftime(time_str, sizeof(char) * 50, "%m/%d/%Y-%I:%M:%S%p", time_info);
 
     return time_str;
 }
