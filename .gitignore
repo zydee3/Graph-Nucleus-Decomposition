@@ -1,4 +1,5 @@
 .vscode
 *.sh
-./graphs.code-workspace
-./bin
+*.code-workspace
+bin/
+data/output/
