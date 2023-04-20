@@ -81,7 +81,10 @@ bool ordered_set_insert(OrderedSet* set, int element) {
 
     // Find the index of the element if it exists or the position to
     // insert it if it does not.
-    int idx_element = array_binary_search_or_closest(set->elements, set->size, element);
+    int idx_element = 0;
+    if (set->size > 0) {
+        idx_element = array_binary_search_or_closest(set->elements, set->size, element);
+    }
 
     // If the element is already in the set, return false.
     if (idx_element < set->size && set->elements[idx_element] == element) {

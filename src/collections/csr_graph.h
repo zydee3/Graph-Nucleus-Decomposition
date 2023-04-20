@@ -11,6 +11,7 @@
 #include "../utilities/array_util.h"
 #include "../utilities/file_io.h"
 #include "csr.h"
+#include "ordered_set.h"
 
 typedef struct CSRGraph {
     int num_vertices;
@@ -31,6 +32,7 @@ CSRGraph* csr_graph_reduce(CSRGraph* graph, bool* removed_vertices);
 // Getter Functions
 int csr_graph_get_edge(CSRGraph* graph, int row_idx, int col_idx);
 int* csr_graph_get_degrees(CSRGraph* graph);
+OrderedSet* csr_graph_get_neighbors(CSRGraph* graph, int idx_vertex_u);
 
 // Utility Functions
 void csr_graph_print(CSRGraph* graph, bool should_print_newline);

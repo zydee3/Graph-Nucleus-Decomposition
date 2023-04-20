@@ -462,6 +462,29 @@ int* csr_graph_get_degrees(CSRGraph* graph) {
     return degrees;
 }
 
+OrderedSet* csr_graph_get_neighbors(CSRGraph* graph, int idx_vertex_u) {
+    assert(graph != NULL);
+    assert(graph->adjacency_matrix != NULL);
+    assert(graph->adjacency_matrix->is_set);
+    assert(graph->adjacency_matrix->ptr_rows != NULL);
+    assert(graph->adjacency_matrix->idx_cols != NULL);
+    assert(idx_vertex_u >= 0);
+    assert(idx_vertex_u < graph->num_vertices);
+
+    int idx_begin_read = graph->adjacency_matrix->ptr_rows[idx_vertex_u];
+    int idx_end_read = graph->adjacency_matrix->ptr_rows[idx_vertex_u + 1];
+
+    OrderedSet* neighbors = ordered_set_new(idx_end_read - idx_begin_read + 1);
+    for (int idx_nnz = idx_begin_read; idx_nnz < idx_end_read; idx_nnz++) {
+        int idx_vertex_v = graph->adjacency_matrix->idx_cols[idx_nnz];
+        ordered_set_insert(neighbors, idx_vertex_v);
+    }
+
+    ordered_set_fit(neighbors);
+
+    return neighbors;
+}
+
 // End Getter Functions
 // Begin Utility Functions
 

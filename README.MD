@@ -25,12 +25,13 @@ As mentioned, `/test` contains all unit tests for our data structures and algori
 ## Compiling
 You can compile this project using the `Makefile`  provided by using the command `make`. `Makefile` produces two binaries, `/bin/graphs` and `/bin/tests`. `/bin/graphs` will run the main file at `/src/main.c` and serves as a general entry point for the project, while `/bin/tests` runs `/test/test.c` which runs all unit tests within `/test`.
 
-# Papers Referenced
+# Papers / Algorithms Referenced
 This section contains references to all referenced algorithms that are (+), will be (-), or might be (&) implemented in this repository. I apologize to those whose name could not be properly written out. 
 
 **A. K-Clique**
    1. (+) [Efficient k-clique Listing with Set Intersection Speedup](https://arxiv.org/pdf/2203.13512.pdf) (Yuan et al.)
    2. (&) [Parallel Clique Counting and Peeling Algorithms](https://arxiv.org/pdf/2002.10047.pdf) (Shi, Dhulipala, Shun)
+   3. (+) [Bron-Kerbosch Algorithm](https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm)
    
 **B. Nucleus Decomposition**
    1. (-) [Finding the Hierarchy of Dense Subgraphs using Nucleus Decompositions (Sarıyuce, Seshadhri, Catalyurek)](https://arxiv.org/pdf/1411.3312.pdf) (Sarıyuce, Seshadhri, Catalyurek)
@@ -38,7 +39,9 @@ This section contains references to all referenced algorithms that are (+), will
    3. (-) [Theoretically and Practically Efficient Parallel Nucleus Decomposition](https://arxiv.org/pdf/2111.10980.pdf) (Shi, Dhulipala, Shun)
    4. (-) [Julienne: A Framework for Parallel Graph Algorithms using Work-efficient Bucketing](https://people.csail.mit.edu/jshun/bucketing.pdf) (Dhulipala, Blelloch, Shun)
    
-**C. Other**
+**C. Other (Related)**
    1.  Bucketing used in B.4..
        1. (-) [Parallel Algorithms for Butterfly Computations](https://arxiv.org/pdf/1907.08607.pdf) (Shi, Shun)
        2. (&) [High-Performance Parallel Graph Coloring with Strong Guarantees on Work, Depth, and Quality](https://arxiv.org/pdf/2008.11321.pdf) (Besta et al.)
+
+
