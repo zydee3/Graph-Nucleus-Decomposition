@@ -10,10 +10,14 @@
 #include "algorithms/core.h"
 #include "collections/csr_graph.h"
 // #include "utilities/file_io.h"
+#include "algorithms/clique_approximate.h"
 
 int main() {
     CSRGraph* graph = csr_graph_new_from_path("data/input/sample");
-    OrderedSet** cliques = find_k_cliques_bron_kerbosch(graph, 3);
+    // CSRGraph* k_core = compute_k_core(graph, 3);
+
+    // csr_graph_delete(&k_core);
+    csr_graph_delete(&graph);
 
     return EXIT_SUCCESS;
 }

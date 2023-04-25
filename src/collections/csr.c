@@ -233,7 +233,7 @@ CompressedSparseRow* csr_reduce(CompressedSparseRow* csr, int num_rows, int num_
     int idx_prev_row = -1;
     int idx_nnz = 0;
 
-    for (int idx_row = 0; idx_row <= csr->num_rows; idx_row++) {
+    for (int idx_row = 0; idx_row < csr->num_rows; idx_row++) {
         int idx_begin_read = ptr_ref_rows[idx_row];
         int idx_end_read = ptr_ref_rows[idx_row + 1];
 

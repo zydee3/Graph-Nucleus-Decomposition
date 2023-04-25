@@ -453,7 +453,8 @@ void test_array_resize() {
         if (next_len == 0) {
             is_passing = is_passing && (test == NULL);
         } else {
-            is_passing = is_passing && test[next_len] == 0;
+            size_t expected_usable_size = sizeof(int) * (next_len);
+            is_passing = is_passing && (malloc_usable_size(test) == expected_usable_size);
         }
     }
 
@@ -461,7 +462,9 @@ void test_array_resize() {
     for (int curr_len = 0; curr_len < NUM_ELEMS; curr_len++) {
         int next_len = curr_len + 1;
         array_resize(&test_2, curr_len, next_len);
-        is_passing = is_passing && test_2[curr_len] == 0;
+
+        size_t expected_usable_size = sizeof(int) * (next_len);
+        is_passing = is_passing && (malloc_usable_size(test_2) == expected_usable_size);
     }
 
     free(test);

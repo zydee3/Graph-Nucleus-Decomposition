@@ -2,6 +2,7 @@
 #define TEST_ARRAY_UTIL_H_INCLUDED
 
 #include <assert.h>
+#include <malloc.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
