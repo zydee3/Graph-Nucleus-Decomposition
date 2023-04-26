@@ -1,5 +1,23 @@
 #include "ordered_set.h"
 
+// Begin Generic Functions
+
+void* ordered_set_generic_copy(void* ref) {
+    return ordered_set_copy((OrderedSet*)ref);
+}
+
+void ordered_set_generic_delete(void** set) {
+    ordered_set_delete((OrderedSet**)set);
+}
+
+bool ordered_set_generic_compare(void* set_a, void* set_b) {
+    return ordered_set_is_equal((OrderedSet*)set_a, (OrderedSet*)set_b);
+}
+
+void ordered_set_generic_print(void* set) {
+    ordered_set_print((OrderedSet*)set, true);
+}
+
 // Begin Create and Delete Functions
 /**
  * @brief Creates a new OrderedSet with the given resize amount.

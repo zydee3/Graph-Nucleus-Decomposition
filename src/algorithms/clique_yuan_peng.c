@@ -1,4 +1,4 @@
-#include "clique.h"
+#include "clique_yuan_peng.h"
 
 // Begin Helper Functions
 
@@ -237,7 +237,7 @@ void s_degree_list(OrderedSet** cliques, int num_cliques, int l, OrderedSet* R, 
     // return S;
 }
 
-OrderedSet** compute_k_cliques(CSRGraph* graph, int k) {
+OrderedSet** find_k_cliques_yuan_peng(CSRGraph* graph, int k) {
     assert(graph != NULL);
     assert(graph->is_directed == false);
     assert(k > 0);

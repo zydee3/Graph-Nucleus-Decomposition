@@ -16,6 +16,12 @@ typedef struct OrderedSet {
     int num_resize_amount;
 } OrderedSet;
 
+// Generic Functions (Overloaded For Convenience)
+void* ordered_set_generic_copy(void* ref);
+void ordered_set_generic_delete(void** set);
+bool ordered_set_generic_compare(void* set_a, void* set_b);
+void ordered_set_generic_print(void* set);
+
 // Create and Delete Functions
 OrderedSet* ordered_set_new(int num_resize_amount);
 OrderedSet* ordered_set_copy(OrderedSet* ref);
