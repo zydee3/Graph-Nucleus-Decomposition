@@ -8,6 +8,6 @@
 #include "../collections/queue.h"
 #include "../utilities/array_util.h"
 
-OrderedSet** find_k_cliques(CSRGraph* graph, int k);
+GenericLinkedList* find_k_cliques(CSRGraph* graph, int k);
 
 #endif
