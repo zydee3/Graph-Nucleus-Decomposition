@@ -4,7 +4,7 @@
 
 # Compilers
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -g -O3 -march=native 
+CFLAGS = -Wall -Wextra -Wpedantic -g -O3 -march=native -gdwarf-4
 
 # Main Directories
 BASE_DIR = src
@@ -59,21 +59,3 @@ $(OBJS_DIR)/%.o: $(TEST_DIR)/%.c
 
 clean:
 	$(RM) -f $(OBJS_DIR)/*.o $(MAIN_EXEC) $(TEST_EXEC)
-
-full:
-	clear
-	make clean
-	make
-	./$(MAIN_EXEC)
-
-tests:
-	clear
-	make clean
-	make
-	./$(TEST_EXEC)
-
-valtests:
-	clear
-	make clean
-	make
-	valgrind ./$(TEST_EXEC)

@@ -1,5 +1,21 @@
 #include "generic_linked_list.h"
 
+void* generic_generic_linked_list_copy(void* list) {
+    return generic_linked_list_copy((GenericLinkedList*)list);
+}
+
+void generic_generic_linked_list_delete(void** list) {
+    generic_linked_list_delete((GenericLinkedList**)list);
+}
+
+bool generic_generic_linked_list_is_equal(void* list_a, void* list_b) {
+    return generic_linked_list_is_equal((GenericLinkedList*)list_a, (GenericLinkedList*)list_b);
+}
+
+void generic_generic_linked_list_print(void* list) {
+    generic_linked_list_print((GenericLinkedList*)list);
+}
+
 GenericLinkedList* generic_linked_list_new(void* (*_copy_data)(void*), void (*_delete_data)(void**), bool (*_compare_data)(void*, void*), void (*_print_data)(void*)) {
     assert(_copy_data != NULL && _delete_data != NULL && _compare_data != NULL && _print_data != NULL);
 
@@ -43,7 +59,7 @@ void generic_linked_list_delete(GenericLinkedList** list) {
     *list = NULL;
 }
 
-bool generic_linked_list_compare(GenericLinkedList* list_a, GenericLinkedList* list_b) {
+bool generic_linked_list_is_equal(GenericLinkedList* list_a, GenericLinkedList* list_b) {
     assert(list_a != NULL && list_b != NULL);
 
     if (list_a->size != list_b->size) {
@@ -74,7 +90,7 @@ void generic_linked_list_print(GenericLinkedList* list) {
         node = node->next;
 
         if (node != NULL) {
-            printf(", ");
+            printf(",");
         }
     }
 }

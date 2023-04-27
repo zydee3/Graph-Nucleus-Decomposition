@@ -184,14 +184,14 @@ void test_generic_linked_list_remove() {
 }
 
 /**
- * @brief Tests generic_linked_list_compare.
+ * @brief Tests generic_linked_list_is_equal.
  *
  * The test creates two lists and inserts different ranges into each
  * list. A copy of the first list is created. The test passes if the
  * first and second list are not evaluated as equal and the first and
  * copied list are evaluated as equal.
  */
-void test_generic_linked_list_compare() {
+void test_generic_linked_list_is_equal() {
     GenericLinkedList* list1 = generic_linked_list_new(_int_copy, _int_delete, _int_compare, _int_print);
     GenericLinkedList* list2 = generic_linked_list_new(_int_copy, _int_delete, _int_compare, _int_print);
 
@@ -201,8 +201,8 @@ void test_generic_linked_list_compare() {
 
     GenericLinkedList* list1_copy = generic_linked_list_copy(list1);
 
-    bool is_valid_difference = !generic_linked_list_compare(list1, list2);
-    bool is_valid_similar = generic_linked_list_compare(list1, list1_copy);
+    bool is_valid_difference = !generic_linked_list_is_equal(list1, list2);
+    bool is_valid_similar = generic_linked_list_is_equal(list1, list1_copy);
     print_test_result(__FILE__, __func__, is_valid_difference && is_valid_similar);
 
     generic_linked_list_delete(&list1);
@@ -220,5 +220,5 @@ void test_generic_linked_list() {
     test_generic_linked_list_copy();
     test_generic_linked_list_contains();
     test_generic_linked_list_remove();
-    test_generic_linked_list_compare();
+    test_generic_linked_list_is_equal();
 }

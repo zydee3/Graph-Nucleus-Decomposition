@@ -23,7 +23,17 @@ void generic_node_delete(void** ptr_node, void (*_delete_data)(void**)) {
     assert(ptr_node != NULL && *ptr_node != NULL && _delete_data != NULL);
 
     GenericNode* node = (GenericNode*)*ptr_node;
-    _delete_data(&node->data);
+    void* node_data = node->data;
+    if (node_data != NULL) {
+        _delete_data(&node->data);
+    }
+
+    free(*ptr_node);
+    *ptr_node = NULL;
+}
+
+void generic_node_delete_shared(void** ptr_node) {
+    assert(ptr_node != NULL && *ptr_node != NULL);
 
     free(*ptr_node);
     *ptr_node = NULL;

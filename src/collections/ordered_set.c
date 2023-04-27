@@ -10,7 +10,7 @@ void ordered_set_generic_delete(void** set) {
     ordered_set_delete((OrderedSet**)set);
 }
 
-bool ordered_set_generic_compare(void* set_a, void* set_b) {
+bool ordered_set_generic_is_equal(void* set_a, void* set_b) {
     return ordered_set_is_equal((OrderedSet*)set_a, (OrderedSet*)set_b);
 }
 
@@ -487,6 +487,15 @@ OrderedSet* ordered_set_symmetric_difference(OrderedSet* set_1, OrderedSet* set_
 // End Operations Functions
 // Begin Utility Functions
 
+/**
+ * @brief Returns true if the set contains the element, otherwise
+ * false.
+ *
+ * @param set
+ * @param element
+ * @return true
+ * @return false
+ */
 bool ordered_set_contains(OrderedSet* set, int element) {
     assert(set != NULL);
 

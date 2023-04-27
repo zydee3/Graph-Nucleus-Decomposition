@@ -19,7 +19,7 @@ typedef struct OrderedSet {
 // Generic Functions (Overloaded For Convenience)
 void* ordered_set_generic_copy(void* ref);
 void ordered_set_generic_delete(void** set);
-bool ordered_set_generic_compare(void* set_a, void* set_b);
+bool ordered_set_generic_is_equal(void* set_a, void* set_b);
 void ordered_set_generic_print(void* set);
 
 // Create and Delete Functions

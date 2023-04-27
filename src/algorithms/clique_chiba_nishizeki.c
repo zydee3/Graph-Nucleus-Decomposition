@@ -26,7 +26,7 @@ GenericLinkedList* find_k_cliques(CSRGraph* graph, int k) {
     assert(graph != NULL);
     assert(k >= 1);
 
-    GenericLinkedList* cliques = generic_linked_list_new(ordered_set_generic_copy, ordered_set_generic_delete, ordered_set_generic_compare, ordered_set_generic_print);
+    GenericLinkedList* cliques = generic_linked_list_new(ordered_set_generic_copy, ordered_set_generic_delete, ordered_set_generic_is_equal, ordered_set_generic_print);
     OrderedSet* clique = ordered_set_new(k);
 
     for (int v = 0; v < graph->num_vertices; v++) {
