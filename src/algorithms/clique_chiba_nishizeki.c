@@ -26,10 +26,16 @@ GenericLinkedList* find_k_cliques(CSRGraph* graph, int k) {
     assert(graph != NULL);
     assert(k >= 1);
 
+    bool* is_vertex_removed = get_vertices_not_in_k_core(graph, k);
+
     GenericLinkedList* cliques = generic_linked_list_new(ordered_set_generic_copy, ordered_set_generic_delete, ordered_set_generic_is_equal, ordered_set_generic_print);
     OrderedSet* clique = ordered_set_new(k);
 
     for (int v = 0; v < graph->num_vertices; v++) {
+        if (is_vertex_removed[v] == true) {
+            continue;
+        }
+
         ordered_set_insert(clique, v);
         OrderedSet* candidates = csr_graph_get_neighbors(graph, v);
         enumerate_k_cliques_chiba_nishizeki(graph, k, 1, v, clique, candidates, cliques);
@@ -38,6 +44,7 @@ GenericLinkedList* find_k_cliques(CSRGraph* graph, int k) {
     }
 
     ordered_set_delete(&clique);
+    free(is_vertex_removed);
 
     return cliques;
 }
