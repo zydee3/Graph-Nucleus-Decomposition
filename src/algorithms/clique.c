@@ -1,8 +1,8 @@
 #include "clique.h"
 
-GenericLinkedList* compute_one_clique(CSRGraph* graph) {
+GenericLinkedList* compute_one_clique(Graph* graph) {
     GenericLinkedList* one_cliques = generic_linked_list_new(ordered_set_generic_copy, ordered_set_generic_delete, ordered_set_generic_is_equal, ordered_set_generic_print);
-    for (int i = 0; i < graph->num_vertices; i++) {
+    for (vertex i = 0; i < graph->num_vertices; i++) {
         OrderedSet* clique = ordered_set_new(1);
         ordered_set_insert(clique, i);
         generic_linked_list_insert(one_cliques, clique);
@@ -11,7 +11,7 @@ GenericLinkedList* compute_one_clique(CSRGraph* graph) {
     return one_cliques;
 }
 
-GenericLinkedList* compute_two_clique(CSRGraph* graph) {
+GenericLinkedList* compute_two_clique(Graph* graph) {
     GenericLinkedList* two_cliques = generic_linked_list_new(ordered_set_generic_copy, ordered_set_generic_delete, ordered_set_generic_is_equal, ordered_set_generic_print);
 
     int* ptr_rows = graph->adjacency_matrix->ptr_rows;

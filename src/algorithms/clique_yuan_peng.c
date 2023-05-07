@@ -76,7 +76,7 @@ void _inc_and_add_ordered_set_array(OrderedSet** set, OrderedSet* element, int c
  * @param removed_vertices
  * @return OrderedSet*
  */
-OrderedSet* _find_relative_clique(CSRGraph* graph, int vertex_u, bool* removed_vertices) {
+OrderedSet* _find_relative_clique(Graph* graph, int vertex_u, bool* removed_vertices) {
     assert(graph != NULL);
     assert(vertex_u >= 0);
     assert(vertex_u < graph->num_vertices);
@@ -128,7 +128,7 @@ OrderedSet* _find_relative_clique(CSRGraph* graph, int vertex_u, bool* removed_v
  * @param vertex_u
  * @return OrderedSet*
  */
-OrderedSet* _get_neighbors(CSRGraph* graph, int vertex_u) {
+OrderedSet* _get_neighbors(Graph* graph, int vertex_u) {
     assert(graph != NULL);
     assert(vertex_u >= 0);
     assert(vertex_u < graph->num_vertices);
@@ -159,7 +159,7 @@ OrderedSet* _get_neighbors(CSRGraph* graph, int vertex_u) {
  * @return true
  * @return false
  */
-bool _is_clique(CSRGraph* graph, OrderedSet* clique) {
+bool _is_clique(Graph* graph, OrderedSet* clique) {
     for (int i = 0; i < clique->size; i++) {
         for (int j = 0; j < clique->size; j++) {
             if (i == j) {
@@ -200,7 +200,7 @@ bool _is_clique(CSRGraph* graph, OrderedSet* clique) {
  * @param directed_graph
  * @param degrees
  */
-void s_degree_list(OrderedSet** cliques, int num_cliques, int l, OrderedSet* R, OrderedSet* C, CSRGraph* undirected_graph, CSRGraph* directed_graph, int* degrees) {
+void s_degree_list(OrderedSet** cliques, int num_cliques, int l, OrderedSet* R, OrderedSet* C, Graph* undirected_graph, Graph* directed_graph, int* degrees) {
     assert(l >= 0);
     assert(R != NULL);
     assert(directed_graph != NULL);
@@ -237,7 +237,7 @@ void s_degree_list(OrderedSet** cliques, int num_cliques, int l, OrderedSet* R, 
     // return S;
 }
 
-OrderedSet** find_k_cliques_yuan_peng(CSRGraph* graph, int k) {
+OrderedSet** find_k_cliques_yuan_peng(Graph* graph, int k) {
     assert(graph != NULL);
     assert(graph->is_directed == false);
     assert(k > 0);
@@ -276,7 +276,7 @@ OrderedSet** find_k_cliques_yuan_peng(CSRGraph* graph, int k) {
 
     // Algorithm 5: SDEGREE(G, k)
     int* degrees = csr_graph_get_degrees(graph);
-    CSRGraph* directed_graph = csr_graph_make_directed(graph, _direct_by_degree, degrees);
+    Graph* directed_graph = csr_graph_make_directed(graph, _direct_by_degree, degrees);
 
     for (int i = 0; i < graph->num_vertices; i++) {
         if (visited_vertices[i] == false && degrees[i] >= k - 1) {

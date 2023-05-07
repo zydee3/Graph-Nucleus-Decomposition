@@ -5,12 +5,12 @@
 #include <stdbool.h>
 
 #include "../algorithms/clique.h"
-#include "../collections/csr_graph.h"
 #include "../collections/generic_linked_list.h"
+#include "../collections/graph.h"
 #include "../collections/ordered_set.h"
 
 GenericLinkedList* group_k_cliques(GenericLinkedList* k_cliques);
 GenericLinkedList* reduce_grouped_k_cliques(GenericLinkedList* grouped_k_cliques, int k);
-GenericLinkedList* expand_cliques(CSRGraph* graph, GenericLinkedList* cliques);
+GenericLinkedList* expand_cliques(Graph* graph, GenericLinkedList* cliques);
 
 #endif

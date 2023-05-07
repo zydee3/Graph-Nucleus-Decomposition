@@ -240,7 +240,7 @@ GenericLinkedList* reduce_grouped_k_cliques(GenericLinkedList* grouped_k_cliques
  * @param k_cliques
  * @return GenericLinkedList*
  */
-GenericLinkedList* expand_cliques(CSRGraph* graph, GenericLinkedList* k_cliques) {
+GenericLinkedList* expand_cliques(Graph* graph, GenericLinkedList* k_cliques) {
     assert(graph != NULL);
     assert(k_cliques != NULL);
 

@@ -1,8 +1,8 @@
 #include "test_core.h"
 
 void test_core() {
-    CSRGraph* undirected_graph = csr_graph_new_from_path("data/input/sample");
-    CSRGraph* k3_core = compute_k_core(undirected_graph, 3);
+    Graph* undirected_graph = csr_graph_new_from_path("data/input/sample");
+    Graph* k3_core = compute_k_core(undirected_graph, 3);
 
     int expected_row_ptrs[] = {0, 3, 8, 11, 15, 21, 28, 31, 36, 39, 43, 46};
     int expected_col_idxs[] = {1, 3, 4, 0, 2, 4, 5, 9, 1, 5, 9, 0, 4, 6, 7, 0, 1, 3, 5, 6, 7, 1, 2, 4, 7, 8, 9, 10, 3, 4, 7, 3, 4, 5, 6, 8, 5, 7, 10, 1, 2, 5, 10, 5, 8, 9};

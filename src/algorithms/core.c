@@ -10,21 +10,21 @@
  * @param removed_vertices
  * @param queue
  */
-static inline void _remove_less_than_k(int vertex_id, int k, int* vertex_degrees, bool* removed_vertices, Queue* queue) {
+static inline void _remove_less_than_k(vertex u, int k, int* vertex_degrees, bool* removed_vertices, Queue* queue) {
     assert(vertex_degrees != NULL);
-    if (vertex_degrees[vertex_id] >= k) {
+    if (vertex_degrees[u] >= k) {
         return;
     }
 
-    if (removed_vertices[vertex_id] == true) {
+    if (removed_vertices[u] == true) {
         return;
     }
 
-    printf("Removing %d (Degree: %d)\n", vertex_id, vertex_degrees[vertex_id]);
+    printf("Removing %d (Degree: %d)\n", u, vertex_degrees[u]);
 
-    vertex_degrees[vertex_id] = 0;
-    queue_enqueue(queue, vertex_id);
-    removed_vertices[vertex_id] = true;
+    vertex_degrees[u] = 0;
+    queue_enqueue(queue, u);
+    removed_vertices[u] = true;
 }
 
 /**
@@ -41,14 +41,14 @@ static inline void _remove_less_than_k(int vertex_id, int k, int* vertex_degrees
  * @param removed_vertices
  * @param queue
  */
-static inline void _decrease_and_remove_less_than_k(int vertex_id, int k, int* vertex_degrees, bool* removed_vertices, Queue* queue) {
-    if (removed_vertices[vertex_id] == true) {
+static inline void _decrease_and_remove_less_than_k(vertex u, int k, int* vertex_degrees, bool* removed_vertices, Queue* queue) {
+    if (removed_vertices[u] == true) {
         return;
     }
 
-    vertex_degrees[vertex_id]--;
+    vertex_degrees[u]--;
 
-    _remove_less_than_k(vertex_id, k, vertex_degrees, removed_vertices, queue);
+    _remove_less_than_k(u, k, vertex_degrees, removed_vertices, queue);
 }
 
 /**
@@ -61,7 +61,7 @@ static inline void _decrease_and_remove_less_than_k(int vertex_id, int k, int* v
  * where each index is true if the vertex is not in the k-core or
  * false otherwise.
  */
-bool* get_vertices_not_in_k_core(CSRGraph* graph, int k) {
+bool* get_vertices_not_in_k_core(Graph* graph, int k) {
     // Record for each vertex if it has been removed.
     bool* removed_vertices = calloc(graph->num_vertices, sizeof(bool));
 
@@ -72,13 +72,13 @@ bool* get_vertices_not_in_k_core(CSRGraph* graph, int k) {
     Queue* queue = queue_new(graph->num_vertices);
 
     // Enqueue all initial vertices with degree less than k.
-    for (int i = 0; i < graph->num_vertices; i++) {
-        if (vertex_degrees[i] < k && removed_vertices[i] == false) {
-            queue_enqueue(queue, i);
-            vertex_degrees[i] = 0;
-            removed_vertices[i] = true;
+    for (vertex u = 0; u < graph->num_vertices; u++) {
+        if (vertex_degrees[u] < k && removed_vertices[u] == false) {
+            queue_enqueue(queue, u);
+            vertex_degrees[u] = 0;
+            removed_vertices[u] = true;
         }
-        _remove_less_than_k(i, k, vertex_degrees, removed_vertices, queue);
+        _remove_less_than_k(u, k, vertex_degrees, removed_vertices, queue);
     }
 
     CompressedSparseRow* adjacency_matrix = graph->adjacency_matrix;
@@ -89,12 +89,12 @@ bool* get_vertices_not_in_k_core(CSRGraph* graph, int k) {
     // their neighbors to the queue if the neighbor's degree becomes
     // less than k after the removal.
     while (queue->size > 0) {
-        int removed_vertex = queue_dequeue(queue);
-        int idx_begin_read = ptr_rows[removed_vertex];
-        int idx_end_read = ptr_rows[removed_vertex + 1];
+        vertex removed = queue_dequeue(queue);
+        int idx_begin_read = ptr_rows[removed];
+        int idx_end_read = ptr_rows[removed + 1];
 
         for (int i = idx_begin_read; i < idx_end_read; i++) {
-            int neighbor = idx_cols[i];
+            vertex neighbor = idx_cols[i];
             vertex_degrees[neighbor]--;
 
             if (vertex_degrees[neighbor] < k && removed_vertices[neighbor] == false) {
@@ -117,9 +117,9 @@ bool* get_vertices_not_in_k_core(CSRGraph* graph, int k) {
  *
  * @param graph The graph to find the k-core of.
  * @param k The min degree of any vertex in the k-core of param graph.
- * @return CSRGraph* The computed k-core of param graph.
+ * @return Graph* The computed k-core of param graph.
  */
-CSRGraph* compute_k_core(CSRGraph* graph, int k) {
+Graph* compute_k_core(Graph* graph, int k) {
     assert(graph != NULL);
     assert(k > 0);
 
@@ -127,7 +127,7 @@ CSRGraph* compute_k_core(CSRGraph* graph, int k) {
     bool* removed_vertices = get_vertices_not_in_k_core(graph, k);
 
     // Reduce the graph to only the vertices that are in the k-core.
-    CSRGraph* k_core = csr_graph_reduce(graph, removed_vertices);
+    Graph* k_core = csr_graph_reduce(graph, removed_vertices);
 
     free(removed_vertices);
 

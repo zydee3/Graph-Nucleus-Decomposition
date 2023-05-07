@@ -1,6 +1,6 @@
 #include "clique_bron_kerbosch.h"
 
-void _compute_all_k_cliques(CSRGraph* graph, int* degrees, int min_k, OrderedSet* clique, OrderedSet* frontier, OrderedSet* processed) {
+void _compute_all_k_cliques(Graph* graph, int* degrees, int min_k, OrderedSet* clique, OrderedSet* frontier, OrderedSet* processed) {
     if (clique->size >= min_k) {
         ordered_set_print(clique, true);
     }
@@ -9,16 +9,16 @@ void _compute_all_k_cliques(CSRGraph* graph, int* degrees, int min_k, OrderedSet
         return;
     }
 
-    int pivot_vertex = -1;
+    vertex pivot = -1;
     OrderedSet* union_set = ordered_set_union(frontier, processed);
     for (int i = 0; i < union_set->size; i++) {
-        if (pivot_vertex == -1 || degrees[union_set->elements[i]] > degrees[pivot_vertex]) {
-            pivot_vertex = union_set->elements[i];
+        if (pivot == -1 || degrees[union_set->elements[i]] > degrees[pivot]) {
+            pivot = union_set->elements[i];
         }
     }
 
-    OrderedSet* pivot_u_neighbors = csr_graph_get_neighbors(graph, pivot_vertex);
-    OrderedSet* non_pivot_frontier = ordered_set_difference(frontier, pivot_u_neighbors);
+    OrderedSet* pivot_neighbors = csr_graph_get_neighbors(graph, pivot);
+    OrderedSet* non_pivot_frontier = ordered_set_difference(frontier, pivot_neighbors);
 
     for (int i = 0; i < non_pivot_frontier->size; i++) {
         int vertex_v = non_pivot_frontier->elements[i];
@@ -38,10 +38,10 @@ void _compute_all_k_cliques(CSRGraph* graph, int* degrees, int min_k, OrderedSet
     }
 
     ordered_set_delete(&non_pivot_frontier);
-    ordered_set_delete(&pivot_u_neighbors);
+    ordered_set_delete(&pivot_neighbors);
 }
 
-OrderedSet** find_k_cliques_bron_kerbosch(CSRGraph* graph, int min_k) {
+OrderedSet** find_k_cliques_bron_kerbosch(Graph* graph, int min_k) {
     assert(graph != NULL);
 
     OrderedSet** k_cliques = NULL;

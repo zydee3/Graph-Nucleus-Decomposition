@@ -5,10 +5,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "../src/collections/graph.h"
 #include "../src/utilities/print_format.h"
-#include "test_params.h"
 
 void test_graph();
 

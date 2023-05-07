@@ -5,30 +5,38 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
+#include "../utilities/array_util.h"
 #include "../utilities/file_io.h"
-#include "linked_list.h"
+#include "compressed_sparse_row.h"
+#include "ordered_set.h"
+
+typedef int vertex;
 
 typedef struct Graph {
-    bool is_directed;
     int num_vertices;
     int num_edges;
-    LinkedList* vertices;
+    bool is_directed;
+    CompressedSparseRow* adjacency_matrix;
 } Graph;
 
-Graph* graph_new(bool is_directed);
+// Create and Delete Functions
+Graph* csr_graph_new(int num_vertices, int num_edges, bool is_directed);
+Graph* csr_graph_new_from_path(const char* file_path);
+void csr_graph_delete(Graph** graph);
 
-void* graph_copy(void* ref_graph);
-void graph_delete(void** ptr_graph);
-bool graph_compare(void* graph_a, void* graph_b);
-void graph_print(void* ref_graph);
+// Manipulator Functions
+Graph* csr_graph_make_directed(Graph* graph, int (*f)(int, int, int*), int* meta_data);
+Graph* csr_graph_reduce(Graph* graph, bool* removed_vertices);
 
-bool graph_add_vertex(Graph* graph, int vertex_value);
-bool graph_remove_vertex(Graph* graph, int vertex_value);
-Node* graph_get_vertex(Graph* graph, int vertex_value);
+// Getter Functions
+int csr_graph_get_edge(Graph* graph, int row_idx, int col_idx);
+int* csr_graph_get_degrees(Graph* graph);
+OrderedSet* csr_graph_get_neighbors(Graph* graph, int idx_vertex_u);
 
-bool graph_add_edge(Graph* graph, int vertex_a_value, int vertex_b_value, int edge_weight);
-bool graph_remove_edge(Graph* graph, int vertex_a_value, int vertex_b_value);
-Node* graph_get_edge(Graph* graph, int vertex_a_value, int vertex_b_value);
+// Utility Functions
+void csr_graph_print(Graph* graph, bool should_print_newline);
 
 #endif

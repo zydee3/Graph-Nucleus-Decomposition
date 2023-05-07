@@ -300,6 +300,7 @@ static inline void _shrink(int** ptr_array, int len_array, int new_len_array) {
     memset(&(*ptr_array)[new_capacity], 0, sizeof(int) * len_shrink);
 
     *ptr_array = realloc(*ptr_array, sizeof(int) * new_capacity);
+
     assert(*ptr_array != NULL);
 }
 

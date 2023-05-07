@@ -2,12 +2,10 @@
 
 #include "test_array_util.h"
 #include "test_clique.h"
+#include "test_compressed_sparse_row.h"
 #include "test_core.h"
-#include "test_csr.h"
-#include "test_csr_graph.h"
 #include "test_generic_linked_list.h"
 #include "test_graph.h"
-#include "test_linked_list.h"
 #include "test_ordered_set.h"
 #include "test_queue.h"
 
@@ -17,15 +15,13 @@ int main() {
     // not changing.
     int idx_begin_tests = 0;
 
-    void (*test_functions[10])() = {
-        test_linked_list,
+    void (*test_functions[8])() = {
         test_generic_linked_list,
-        test_graph,
         test_array_util,
         test_ordered_set,
         test_queue,
-        test_csr,
-        test_csr_graph,
+        test_compressed_sparse_row,
+        test_graph,
         test_core,
         test_clique,
     };

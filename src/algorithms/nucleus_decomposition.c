@@ -54,7 +54,7 @@ bool _is_s_clique_processed(OrderedSet* s_map, bool* is_processed) {
  * @param s_cliques
  * @return int*
  */
-int* set_k(CSRGraph* graph, int r, int s) {
+int* set_k(Graph* graph, int r, int s) {
     GenericLinkedList* list_r_cliques = find_k_cliques(graph, r);
     GenericLinkedList* list_s_cliques = expand_cliques(graph, list_r_cliques);
 
@@ -149,7 +149,7 @@ int* set_k(CSRGraph* graph, int r, int s) {
     return k_values;
 }
 
-int* approximate_k(CSRGraph* graph, int r, int s) {
+int* approximate_k(Graph* graph, int r, int s) {
     GenericLinkedList* list_r_cliques = find_k_cliques(graph, r);
     GenericLinkedList* list_s_cliques = expand_cliques(graph, list_r_cliques);
 
@@ -248,7 +248,7 @@ int* approximate_k(CSRGraph* graph, int r, int s) {
     return k_values;
 }
 
-void run_nucleus_decomposition_3_4(CSRGraph* graph) {
+void run_nucleus_decomposition_3_4(Graph* graph) {
     assert(graph != NULL);
 
     // set_k(graph, 3, 4);

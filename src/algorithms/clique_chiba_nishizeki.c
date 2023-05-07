@@ -1,6 +1,6 @@
 #include "clique_chiba_nishizeki.h"
 
-void enumerate_k_cliques_chiba_nishizeki(CSRGraph* graph, int target_k, int current_k, int current_vertex, OrderedSet* clique, OrderedSet* candidates, GenericLinkedList* cliques) {
+void enumerate_k_cliques_chiba_nishizeki(Graph* graph, int target_k, int current_k, int current_vertex, OrderedSet* clique, OrderedSet* candidates, GenericLinkedList* cliques) {
     assert(graph != NULL);
     assert(graph->adjacency_matrix != NULL);
     assert(graph->adjacency_matrix->is_set);
@@ -16,7 +16,7 @@ void enumerate_k_cliques_chiba_nishizeki(CSRGraph* graph, int target_k, int curr
     OrderedSet* new_candidates = ordered_set_intersection(candidates, neighbors);
 
     for (int i = 0; i < new_candidates->size; i++) {
-        int candidate = new_candidates->elements[i];
+        vertex candidate = new_candidates->elements[i];
         if (candidate > current_vertex) {
             ordered_set_insert(clique, candidate);
             enumerate_k_cliques_chiba_nishizeki(graph, target_k, current_k + 1, candidate, clique, new_candidates, cliques);
@@ -28,7 +28,7 @@ void enumerate_k_cliques_chiba_nishizeki(CSRGraph* graph, int target_k, int curr
     ordered_set_delete(&new_candidates);
 }
 
-GenericLinkedList* find_k_cliques(CSRGraph* graph, int k) {
+GenericLinkedList* find_k_cliques(Graph* graph, int k) {
     assert(graph != NULL);
     assert(k >= 1);
 
@@ -37,7 +37,7 @@ GenericLinkedList* find_k_cliques(CSRGraph* graph, int k) {
     GenericLinkedList* cliques = generic_linked_list_new(ordered_set_generic_copy, ordered_set_generic_delete, ordered_set_generic_is_equal, ordered_set_generic_print);
     OrderedSet* clique = ordered_set_new(k);
 
-    for (int v = 0; v < graph->num_vertices; v++) {
+    for (vertex v = 0; v < graph->num_vertices; v++) {
         if (is_vertex_removed[v] == true) {
             continue;
         }
