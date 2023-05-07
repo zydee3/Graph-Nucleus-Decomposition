@@ -485,6 +485,34 @@ OrderedSet* ordered_set_symmetric_difference(OrderedSet* set_1, OrderedSet* set_
 }
 
 // End Operations Functions
+// Begin Morphing  Functions
+
+OrderedSet** ordered_set_as_array(GenericLinkedList** sets) {
+    assert(sets != NULL);
+    assert(*sets != NULL);
+
+    int num_sets = (*sets)->size;
+    OrderedSet** sets_array = calloc(num_sets, sizeof(OrderedSet*));
+
+    int idx_array = 0;
+    GenericNode* current_node = (*sets)->head;
+
+    while (current_node != NULL) {
+        OrderedSet* current_set = (OrderedSet*)current_node->data;
+        sets_array[idx_array] = current_set;
+
+        current_node->data = NULL;
+
+        current_node = current_node->next;
+        idx_array++;
+    }
+
+    generic_linked_list_delete(sets);
+
+    return sets_array;
+}
+
+// End Morphing Functions
 // Begin Utility Functions
 
 /**

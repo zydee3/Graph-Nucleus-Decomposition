@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "../utilities/array_util.h"
+#include "generic_linked_list.h"
 
 typedef struct OrderedSet {
     int* elements;
@@ -39,6 +40,9 @@ OrderedSet* ordered_set_union(OrderedSet* set_1, OrderedSet* set_2);
 OrderedSet* ordered_set_intersection(OrderedSet* set_1, OrderedSet* set_2);
 OrderedSet* ordered_set_difference(OrderedSet* set_1, OrderedSet* set_2);
 OrderedSet* ordered_set_symmetric_difference(OrderedSet* set_1, OrderedSet* set_2);
+
+// Morphing Functions
+OrderedSet** ordered_set_as_array(GenericLinkedList** sets);
 
 // Utility Functions
 bool ordered_set_contains(OrderedSet* set, int element);

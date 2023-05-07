@@ -27,26 +27,28 @@ bool _insert_clique_into_group(GenericLinkedList* clique_group, OrderedSet* cliq
         OrderedSet* curr_clique = (OrderedSet*)curr_clique_node->data;
         assert(curr_clique != NULL);
 
-        OrderedSet* symm_diff = ordered_set_symmetric_difference(curr_clique, clique_candidate);
-        assert(symm_diff != NULL);
+        int size_symm_diff = array_count_symmetric_difference(curr_clique->elements, clique_candidate->elements, curr_clique->size, clique_candidate->size);
 
-        int symm_diff_size = symm_diff->size;
-        ordered_set_delete(&symm_diff);
+        // OrderedSet* symm_diff = ordered_set_symmetric_difference(curr_clique, clique_candidate);
+        // assert(symm_diff != NULL);
+
+        // int symm_diff_size = symm_diff->size;
+        // ordered_set_delete(&symm_diff);
 
         // if the size is 0, then the cliques are equal
-        if (symm_diff_size == 0) {
+        if (size_symm_diff == 0) {
             return true;
         }
 
         // if the size is 1, then we're taking the symmetric
         // difference of two cliques with different sizes, which is
         // impossible as all cliques should be of size k.
-        assert(symm_diff_size != 1);
+        assert(size_symm_diff != 1);
 
         // if the size is not 2, then the cliques are not adjacent.
         // actually, this is a redundant check as this would have
         // failed in any iteration (can be shown inductively)
-        if (symm_diff_size > 2) {
+        if (size_symm_diff > 2) {
             return false;
         }
 
@@ -157,7 +159,7 @@ void _insert_clique_into_group_list(GenericLinkedList* list_clique_group, Ordere
  * @return GenericLinkedList* A list of clique groups where each
  * clique group is a list of cliques (i.e., a 2D list of cliques).
  */
-GenericLinkedList* _group_k_cliques(GenericLinkedList* k_cliques) {
+GenericLinkedList* group_k_cliques(GenericLinkedList* k_cliques) {
     GenericLinkedList* list_grouped_cliques = generic_linked_list_new(
         generic_generic_linked_list_copy,
         generic_generic_linked_list_delete,
@@ -195,7 +197,7 @@ GenericLinkedList* _group_k_cliques(GenericLinkedList* k_cliques) {
  * @param k The size of the cliques in param grouped_k_cliques.
  * @return GenericLinkedList* A list of all (k+1)-cliques.
  */
-GenericLinkedList* _reduce_grouped_k_cliques(GenericLinkedList* grouped_k_cliques, int k) {
+GenericLinkedList* reduce_grouped_k_cliques(GenericLinkedList* grouped_k_cliques, int k) {
     GenericLinkedList* k_plus_one_cliques = generic_linked_list_new(
         ordered_set_generic_copy,
         ordered_set_generic_delete,
@@ -263,11 +265,11 @@ GenericLinkedList* expand_cliques(CSRGraph* graph, GenericLinkedList* k_cliques)
     }
 
     // Group all the k-cliques
-    GenericLinkedList* grouped_k_cliques = _group_k_cliques(k_cliques);
+    GenericLinkedList* grouped_k_cliques = group_k_cliques(k_cliques);
 
     // For each k-clique group, form a (k+1)-clique if the group
     // forms a valid (k+1)-clique.
-    GenericLinkedList* k_plus_one_cliques = _reduce_grouped_k_cliques(grouped_k_cliques, k);
+    GenericLinkedList* k_plus_one_cliques = reduce_grouped_k_cliques(grouped_k_cliques, k);
 
     // Cleanup
     generic_linked_list_delete(&grouped_k_cliques);

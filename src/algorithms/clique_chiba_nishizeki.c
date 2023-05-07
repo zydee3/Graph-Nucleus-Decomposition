@@ -1,6 +1,12 @@
 #include "clique_chiba_nishizeki.h"
 
 void enumerate_k_cliques_chiba_nishizeki(CSRGraph* graph, int target_k, int current_k, int current_vertex, OrderedSet* clique, OrderedSet* candidates, GenericLinkedList* cliques) {
+    assert(graph != NULL);
+    assert(graph->adjacency_matrix != NULL);
+    assert(graph->adjacency_matrix->is_set);
+    assert(current_vertex >= 0);
+    assert(current_vertex < graph->num_vertices);
+
     if (current_k == target_k) {
         generic_linked_list_insert(cliques, ordered_set_generic_copy(clique));
         return;

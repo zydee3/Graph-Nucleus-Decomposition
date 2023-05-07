@@ -33,6 +33,15 @@ void array_resize(int** ptr_array, int len_array, int len_new_array);
 void array_parallel_sort_2(int* array_1, int* array_2, int len_array_1, int len_array_2, bool is_ascending);
 void array_parallel_sort_3(int* array_1, int* array_2, int* array_3, int len_array_1, int len_array_2, int len_array_3, bool is_ascending);
 
+// Indexing Functions
+int array_argmin(int* array, int len_array);
+int array_argmax(int* array, int len_array);
+int array_filtered_argmin(int* array, int len_array, bool* idx_filtered);
+int array_filtered_argmax(int* array, int len_array, bool* idx_filtered);
+
+// Ordered Set Functions
+int array_count_symmetric_difference(int* array_1, int* array_2, int len_array_1, int len_array_2);
+
 // Utility Functions
 bool array_is_equal(int* array_1, int* array_2, int len_array_1, int len_array_2);
 void array_print(int* array, int len_array, bool should_print_newline);

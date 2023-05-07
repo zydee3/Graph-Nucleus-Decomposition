@@ -863,6 +863,61 @@ void array_parallel_sort_3(int* array_1, int* array_2, int* array_3, int len_arr
     }
 }
 
+int array_filtered_argmin(int* array, int len_array, bool* idx_filtered) {
+    assert(array != NULL);
+    assert(len_array > 0);
+
+    bool is_min_set = false;
+    int min_idx = 0;
+
+    for (int i = 0; i < len_array; i++) {
+        if (idx_filtered[i] == true) {
+            continue;
+        }
+
+        if (is_min_set == false) {
+            min_idx = i;
+            is_min_set = true;
+        } else if (array[i] < array[min_idx]) {
+            min_idx = i;
+        }
+    }
+
+    assert(idx_filtered[min_idx] == false);
+
+    return min_idx;
+}
+
+int array_count_symmetric_difference(int* array_1, int* array_2, int len_array_1, int len_array_2) {
+    assert(array_1 != NULL);
+    assert(array_2 != NULL);
+    assert(len_array_1 > 0);
+    assert(len_array_2 > 0);
+
+    int num_differences = 0;
+
+    int idx_array_1 = 0;
+    int idx_array_2 = 0;
+
+    while (idx_array_1 < len_array_1 && idx_array_2 < len_array_2) {
+        if (array_1[idx_array_1] < array_2[idx_array_2]) {
+            num_differences++;
+            idx_array_1++;
+        } else if (array_1[idx_array_1] > array_2[idx_array_2]) {
+            num_differences++;
+            idx_array_2++;
+        } else {
+            idx_array_1++;
+            idx_array_2++;
+        }
+    }
+
+    num_differences += len_array_1 - idx_array_1;
+    num_differences += len_array_2 - idx_array_2;
+
+    return num_differences;
+}
+
 // End Manipulation Functions
 // Begin Utility Functions
 
