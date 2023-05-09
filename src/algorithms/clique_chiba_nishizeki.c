@@ -12,7 +12,7 @@ void enumerate_k_cliques_chiba_nishizeki(Graph* graph, int target_k, int current
         return;
     }
 
-    OrderedSet* neighbors = csr_graph_get_neighbors(graph, current_vertex);
+    OrderedSet* neighbors = graph_get_neighbors(graph, current_vertex);
     OrderedSet* new_candidates = ordered_set_intersection(candidates, neighbors);
 
     for (int i = 0; i < new_candidates->size; i++) {
@@ -43,7 +43,7 @@ GenericLinkedList* find_k_cliques(Graph* graph, int k) {
         }
 
         ordered_set_insert(clique, v);
-        OrderedSet* candidates = csr_graph_get_neighbors(graph, v);
+        OrderedSet* candidates = graph_get_neighbors(graph, v);
         enumerate_k_cliques_chiba_nishizeki(graph, k, 1, v, clique, candidates, cliques);
         ordered_set_remove(clique, v);
         ordered_set_delete(&candidates);

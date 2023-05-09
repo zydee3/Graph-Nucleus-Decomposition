@@ -66,7 +66,7 @@ bool* get_vertices_not_in_k_core(Graph* graph, int k) {
     bool* removed_vertices = calloc(graph->num_vertices, sizeof(bool));
 
     // Initial degree of each vertex.
-    int* vertex_degrees = csr_graph_get_degrees(graph);
+    int* vertex_degrees = graph_get_degrees(graph);
 
     // Queue of vertices to be removed. Need to visit each neighbor.
     Queue* queue = queue_new(graph->num_vertices);
@@ -127,7 +127,7 @@ Graph* compute_k_core(Graph* graph, int k) {
     bool* removed_vertices = get_vertices_not_in_k_core(graph, k);
 
     // Reduce the graph to only the vertices that are in the k-core.
-    Graph* k_core = csr_graph_reduce(graph, removed_vertices);
+    Graph* k_core = graph_reduce(graph, removed_vertices);
 
     free(removed_vertices);
 

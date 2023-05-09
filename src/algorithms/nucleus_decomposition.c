@@ -150,7 +150,7 @@ int* set_k(Graph* graph, int r, int s) {
 }
 
 int* approximate_k(Graph* graph, int r, int s) {
-    GenericLinkedList* list_r_cliques = find_k_cliques(graph, r);
+        GenericLinkedList* list_r_cliques = find_k_cliques(graph, r);
     GenericLinkedList* list_s_cliques = expand_cliques(graph, list_r_cliques);
 
     int num_r_cliques = list_r_cliques->size;

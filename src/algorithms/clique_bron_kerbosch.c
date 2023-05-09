@@ -17,12 +17,12 @@ void _compute_all_k_cliques(Graph* graph, int* degrees, int min_k, OrderedSet* c
         }
     }
 
-    OrderedSet* pivot_neighbors = csr_graph_get_neighbors(graph, pivot);
+    OrderedSet* pivot_neighbors = graph_get_neighbors(graph, pivot);
     OrderedSet* non_pivot_frontier = ordered_set_difference(frontier, pivot_neighbors);
 
     for (int i = 0; i < non_pivot_frontier->size; i++) {
         int vertex_v = non_pivot_frontier->elements[i];
-        OrderedSet* v_neighbors = csr_graph_get_neighbors(graph, vertex_v);
+        OrderedSet* v_neighbors = graph_get_neighbors(graph, vertex_v);
         OrderedSet* next_frontier = ordered_set_intersection(frontier, v_neighbors);
         OrderedSet* next_processed = ordered_set_intersection(processed, v_neighbors);
 
@@ -46,7 +46,7 @@ OrderedSet** find_k_cliques_bron_kerbosch(Graph* graph, int min_k) {
 
     OrderedSet** k_cliques = NULL;
 
-    int* degrees = csr_graph_get_degrees(graph);
+    int* degrees = graph_get_degrees(graph);
     OrderedSet* clique = ordered_set_new(min_k);
 
     OrderedSet* frontier = ordered_set_new(graph->num_vertices);

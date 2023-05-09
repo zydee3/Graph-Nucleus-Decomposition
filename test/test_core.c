@@ -1,7 +1,7 @@
 #include "test_core.h"
 
 void test_core() {
-    Graph* undirected_graph = csr_graph_new_from_path("data/input/sample");
+    Graph* undirected_graph = graph_new_from_path("data/input/sample");
     Graph* k3_core = compute_k_core(undirected_graph, 3);
 
     int expected_row_ptrs[] = {0, 3, 8, 11, 15, 21, 28, 31, 36, 39, 43, 46};
@@ -14,8 +14,8 @@ void test_core() {
     is_passing &= array_is_equal(k3_core->adjacency_matrix->ptr_rows, expected_row_ptrs, k3_core->num_vertices + 1, len_row_ptrs);
     is_passing &= array_is_equal(k3_core->adjacency_matrix->idx_cols, expected_col_idxs, k3_core->adjacency_matrix->num_nnzs, len_col_idxs);
 
-    csr_graph_delete(&k3_core);
-    csr_graph_delete(&undirected_graph);
+    graph_delete(&k3_core);
+    graph_delete(&undirected_graph);
 
     print_test_result(__FILE__, __func__, is_passing);
 }

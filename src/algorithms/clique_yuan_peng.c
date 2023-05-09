@@ -166,7 +166,7 @@ bool _is_clique(Graph* graph, OrderedSet* clique) {
                 continue;
             }
 
-            if (csr_graph_get_edge(graph, clique->elements[i], clique->elements[j]) == -1) {
+            if (graph_get_edge(graph, clique->elements[i], clique->elements[j]) == -1) {
                 return false;
             }
         }
@@ -275,8 +275,8 @@ OrderedSet** find_k_cliques_yuan_peng(Graph* graph, int k) {
     }
 
     // Algorithm 5: SDEGREE(G, k)
-    int* degrees = csr_graph_get_degrees(graph);
-    Graph* directed_graph = csr_graph_make_directed(graph, _direct_by_degree, degrees);
+    int* degrees = graph_get_degrees(graph);
+    Graph* directed_graph = graph_make_directed(graph, _direct_by_degree, degrees);
 
     for (int i = 0; i < graph->num_vertices; i++) {
         if (visited_vertices[i] == false && degrees[i] >= k - 1) {
@@ -292,8 +292,8 @@ OrderedSet** find_k_cliques_yuan_peng(Graph* graph, int k) {
         }
     }
 
-    // csr_graph_delete(&k_core);
-    // csr_graph_delete(&graph);
+    // graph_delete(&k_core);
+    // graph_delete(&graph);
 
     return NULL;
 }

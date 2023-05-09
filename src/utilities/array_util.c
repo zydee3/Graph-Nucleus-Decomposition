@@ -2,6 +2,24 @@
 
 // Begin Locale Helper Functions
 
+int cmp_ints_asc(const void* a, const void* b) {
+    int arg1 = *(const int*)a;
+    int arg2 = *(const int*)b;
+
+    if (arg1 < arg2) return -1;
+    if (arg1 > arg2) return 1;
+    return 0;
+}
+
+int cmp_ints_dsc(const void* a, const void* b) {
+    int arg1 = *(const int*)a;
+    int arg2 = *(const int*)b;
+
+    if (arg1 > arg2) return -1;
+    if (arg1 < arg2) return 1;
+    return 0;
+}
+
 /**
  * @brief Uses linear search to find the index of the target element.
  *
@@ -847,6 +865,20 @@ void array_parallel_sort_2(int* array_1, int* array_2, int len_array_1, int len_
     }
 }
 
+/**
+ * @brief Sorts param array_1, param array_2 and param array_3 based
+ * on the sorting of param array_2.
+ *
+ * @attention This function temporarily does not sort array_3.
+ *
+ * @param array_1
+ * @param array_2
+ * @param array_3
+ * @param len_array_1
+ * @param len_array_2
+ * @param len_array_3
+ * @param is_ascending
+ */
 void array_parallel_sort_3(int* array_1, int* array_2, int* array_3, int len_array_1, int len_array_2, int len_array_3, bool is_ascending) {
     assert(array_1 != NULL);
     assert(array_2 != NULL);
@@ -855,12 +887,28 @@ void array_parallel_sort_3(int* array_1, int* array_2, int* array_3, int len_arr
     assert(len_array_2 == len_array_3);
     assert(len_array_1 >= 0);
 
+    // save the function pointer to the correct comparison function
+    int (*cmp)(const void*, const void*);
+
     if (is_ascending) {
         _parallel_sort_ascending_3(array_1, array_2, array_3, 0, len_array_1 - 1);
-        _parallel_sort_c_based_on_b_maintain_a_ascending(array_1, array_2, array_3, len_array_1);
+        cmp = cmp_ints_asc;
+        // _parallel_sort_c_based_on_b_maintain_a_ascending(array_1, array_2, array_3, len_array_1);
     } else {
         _parallel_sort_descending_3(array_1, array_2, array_3, 0, len_array_1 - 1);
-        _parallel_sort_c_based_on_b_maintain_a_descending(array_1, array_2, array_3, len_array_1);
+        cmp = cmp_ints_dsc;
+        // _parallel_sort_c_based_on_b_maintain_a_descending(array_1, array_2, array_3, len_array_1);
+    }
+
+    int idx_prev = 0;
+
+    for (int idx_curr = 0; idx_curr <= len_array_1; idx_curr++) {
+        if (array_1[idx_curr] != array_1[idx_prev]) {
+            int len_sort = idx_curr - idx_prev;
+            qsort(&(array_2[idx_prev]), len_sort, sizeof(int), cmp);
+            // array_parallel_sort_2(&(array_2[idx_prev]), &(array_3[idx_prev]), len_sort, len_sort, is_ascending);
+            idx_prev = idx_curr;
+        }
     }
 }
 

@@ -169,8 +169,9 @@ void csr_delete(CompressedSparseRow** csr) {
  * @brief Transforms a compressed sparse row row-pointers into an
  * coordinate row list.
  *
- * @param csr
- * @return int*
+ * @param csr The CompressedSparseRow object to decompress.
+ * @return int* Coordinate row list of the given compressed sparse
+ * row row-pointers.
  */
 int* csr_decompress_row_ptrs(CompressedSparseRow* csr) {
     int* idx_decompressed_rows = calloc(csr->num_nnzs, sizeof(int));

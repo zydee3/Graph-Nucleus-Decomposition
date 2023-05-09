@@ -23,20 +23,20 @@ typedef struct Graph {
 } Graph;
 
 // Create and Delete Functions
-Graph* csr_graph_new(int num_vertices, int num_edges, bool is_directed);
-Graph* csr_graph_new_from_path(const char* file_path);
-void csr_graph_delete(Graph** graph);
+Graph* graph_new(int num_vertices, int num_edges, bool is_directed);
+Graph* graph_new_from_path(const char* file_path);
+void graph_delete(Graph** graph);
 
 // Manipulator Functions
-Graph* csr_graph_make_directed(Graph* graph, int (*f)(int, int, int*), int* meta_data);
-Graph* csr_graph_reduce(Graph* graph, bool* removed_vertices);
+Graph* graph_make_directed(Graph* graph, int (*f)(int, int, int*), int* meta_data);
+Graph* graph_reduce(Graph* graph, bool* removed_vertices);
 
 // Getter Functions
-int csr_graph_get_edge(Graph* graph, int row_idx, int col_idx);
-int* csr_graph_get_degrees(Graph* graph);
-OrderedSet* csr_graph_get_neighbors(Graph* graph, int idx_vertex_u);
+int graph_get_edge(Graph* graph, int row_idx, int col_idx);
+int* graph_get_degrees(Graph* graph);
+OrderedSet* graph_get_neighbors(Graph* graph, int idx_vertex_u);
 
 // Utility Functions
-void csr_graph_print(Graph* graph, bool should_print_newline);
+void graph_print(Graph* graph, bool should_print_newline);
 
 #endif

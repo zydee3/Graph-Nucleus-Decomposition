@@ -316,30 +316,29 @@ OrderedSet* ordered_set_intersection(OrderedSet* set_1, OrderedSet* set_2) {
         return ordered_set_new(0);
     }
 
-    // Create the new set. The new set will have a maximum capacity
-    // equal to the size of the smaller set. Though, the new set will
-    // be fitted so this computation is not necessary.
-    int min_size = (set_1->size < set_2->size) ? (set_1->size) : (set_2->size);
-    OrderedSet* intersection_set = ordered_set_new(min_size);
+    OrderedSet* smaller_set;
+    OrderedSet* larger_set;
 
-    // Iterate through both sets to find the intersection.
-    int idx_set_1 = 0;
-    int idx_set_2 = 0;
+    if (set_1->size < set_2->size) {
+        smaller_set = set_1;
+        larger_set = set_2;
+    } else {
+        smaller_set = set_2;
+        larger_set = set_1;
+    }
 
-    while (idx_set_1 < set_1->size && idx_set_2 < set_2->size) {
-        if (set_1->elements[idx_set_1] == set_2->elements[idx_set_2]) {
-            ordered_set_insert(intersection_set, set_1->elements[idx_set_1]);
-            idx_set_1++;
-            idx_set_2++;
-        } else if (set_1->elements[idx_set_1] < set_2->elements[idx_set_2]) {
-            idx_set_1++;
-        } else {
-            idx_set_2++;
+    OrderedSet* intersection_set = ordered_set_new(smaller_set->size);
+    int idx_intersection_set = 0;
+
+    for (int i = 0; i < smaller_set->size; i++) {
+        int element = smaller_set->elements[i];
+        if (ordered_set_contains(larger_set, element)) {
+            intersection_set->elements[idx_intersection_set] = element;
+            idx_intersection_set++;
+            intersection_set->size++;
         }
     }
 
-    // Free up unused memory at the tail of the set. Realloc for
-    // reducing the array size is fast as the flag is only released.
     ordered_set_fit(intersection_set);
 
     return intersection_set;
@@ -379,6 +378,7 @@ OrderedSet* ordered_set_difference(OrderedSet* set_1, OrderedSet* set_2) {
 
     // The maximum size the difference set can have is set_1->size.
     OrderedSet* difference_set = ordered_set_new(set_1->size);
+    int idx_difference_set = 0;
 
     // Iterate through both sets, removing elements from set_1 that
     // are also in set_2, to find the difference.
@@ -527,7 +527,7 @@ OrderedSet** ordered_set_as_array(GenericLinkedList** sets) {
 bool ordered_set_contains(OrderedSet* set, int element) {
     assert(set != NULL);
 
-    return array_binary_search_or_closest(set->elements, set->size, element) >= 0;
+    return array_binary_search(set->elements, set->size, element) >= 0;
 }
 
 /**

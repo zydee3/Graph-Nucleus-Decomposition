@@ -177,7 +177,7 @@ static inline int _get_relative_idx_col(Graph* graph, int idx_row, int idx_col) 
  * @param is_directed Whether the graph is directed or not.
  * @return Graph* The newly created graph.
  */
-Graph* csr_graph_new(int num_vertices, int num_edges, bool is_directed) {
+Graph* graph_new(int num_vertices, int num_edges, bool is_directed) {
     CompressedSparseRow* csr = csr_new(num_vertices, num_vertices, num_edges);
     assert(csr != NULL);
 
@@ -204,7 +204,7 @@ Graph* csr_graph_new(int num_vertices, int num_edges, bool is_directed) {
  * @param file_path The path to the file to create the graph from.
  * @return Graph* The newly created graph.
  */
-Graph* csr_graph_new_from_path(const char* file_path) {
+Graph* graph_new_from_path(const char* file_path) {
     FILE* file = file_open(file_path, FILE_READ_EXISTING);
     assert(file != NULL);
 
@@ -233,11 +233,11 @@ Graph* csr_graph_new_from_path(const char* file_path) {
  * @param graph The graph to create a deep copy of.
  * @return Graph* The newly created deep copy of the graph.
  */
-Graph* csr_graph_copy(Graph* graph) {
+Graph* graph_copy(Graph* graph) {
     assert(graph != NULL);
     assert(graph->adjacency_matrix->is_set);
 
-    Graph* copy = csr_graph_new(graph->num_vertices, graph->num_edges, graph->is_directed);
+    Graph* copy = graph_new(graph->num_vertices, graph->num_edges, graph->is_directed);
     copy->adjacency_matrix = csr_copy(graph->adjacency_matrix);
     return copy;
 }
@@ -250,7 +250,7 @@ Graph* csr_graph_copy(Graph* graph) {
  *
  * @param graph The graph to delete.
  */
-void csr_graph_delete(Graph** graph) {
+void graph_delete(Graph** graph) {
     assert(graph != NULL);
     assert(*graph != NULL);
 
@@ -280,44 +280,62 @@ void csr_graph_delete(Graph** graph) {
  * @param f The function to determine the direction of any given edge.
  * @return Graph* The newly created directed graph.
  */
-Graph* csr_graph_make_directed(Graph* graph, int (*f)(int, int, int*), int* meta_data) {
+Graph* graph_make_directed(Graph* graph, int (*f)(int, int, int*), int* meta_data) {
     assert(graph != NULL);
     assert(graph->adjacency_matrix->is_set);
     assert(f != NULL);
 
-    Graph* directed_graph = csr_graph_copy(graph);
+    Graph* directed_graph = graph_copy(graph);
     directed_graph->is_directed = true;
 
-    // int* ptr_dir_rows = directed_graph->adjacency_matrix->ptr_rows;
-    int* idx_dir_cols = directed_graph->adjacency_matrix->idx_cols;
-    int* edge_dir_weights = directed_graph->adjacency_matrix->edge_weights;
+    CompressedSparseRow* adjacency_matrix = directed_graph->adjacency_matrix;
+    int* idx_dir_cols = adjacency_matrix->idx_cols;
+    int* edge_dir_weights = adjacency_matrix->edge_weights;
 
     // decompress csr into coordinate format
     int* idx_decompressed_und_rows = csr_decompress_row_ptrs(directed_graph->adjacency_matrix);
+
+    int skipped = 0;
 
     // apply f to each row and column to obtain the new ordering
     for (int i = 0; i < graph->num_edges; i++) {
         vertex u = idx_decompressed_und_rows[i];
         vertex v = idx_dir_cols[i];
 
+        if (u >= v) {
+            skipped++;
+            continue;
+        }
+
         vertex target = f(u, v, meta_data);
         vertex source = target == u ? v : u;
 
-        idx_decompressed_und_rows[i] = source;
-        idx_dir_cols[i] = target;
+        idx_decompressed_und_rows[i - skipped] = source;
+        idx_dir_cols[i - skipped] = target;
     }
 
+    // printf("skipped: %d, num_edges: %d\n", skipped, graph->num_edges);
+
+    int num_edges = graph->num_edges - skipped;
+
+    adjacency_matrix->num_nnzs = num_edges;
+    directed_graph->num_edges = num_edges;
+
+    adjacency_matrix->idx_cols = realloc(adjacency_matrix->idx_cols, num_edges * sizeof(int));
+    adjacency_matrix->edge_weights = realloc(adjacency_matrix->edge_weights, num_edges * sizeof(int));
+
     // parallel sort by rows then columns to prepare for the new csr
-    array_parallel_sort_3(idx_decompressed_und_rows, idx_dir_cols, edge_dir_weights, graph->num_edges, graph->num_edges, graph->num_edges, true);
+    array_parallel_sort_3(idx_decompressed_und_rows, idx_dir_cols, edge_dir_weights, num_edges, num_edges, num_edges, true);
 
     // compress coordinate format into csr
     csr_compress_row_ptrs(directed_graph->adjacency_matrix, idx_decompressed_und_rows);
+
     free(idx_decompressed_und_rows);
 
     return directed_graph;
 }
 
-Graph* csr_graph_reduce(Graph* graph, bool* removed_vertices) {
+Graph* graph_reduce(Graph* graph, bool* removed_vertices) {
     // cloning would cost space and would run in the same time, maybe
     // worse, than just counting the number of vertices and edges
     assert(graph != NULL);
@@ -395,7 +413,7 @@ Graph* csr_graph_reduce(Graph* graph, bool* removed_vertices) {
  * -1. If the graph is unweighted, the function will always return 1
  * for any edge in the graph that exists.
  */
-int csr_graph_get_edge(Graph* graph, int idx_row, int idx_col) {
+int graph_get_edge(Graph* graph, int idx_row, int idx_col) {
     assert(graph != NULL);
     assert(graph->adjacency_matrix != NULL);
     assert(graph->adjacency_matrix->is_set);
@@ -440,7 +458,7 @@ int csr_graph_get_edge(Graph* graph, int idx_row, int idx_col) {
  * @param graph The graph to compute the degrees of.
  * @return int* The array of degrees of each vertex in the graph.
  */
-int* csr_graph_get_degrees(Graph* graph) {
+int* graph_get_degrees(Graph* graph) {
     assert(graph != NULL);
 
     CompressedSparseRow* adjacency_matrix = graph->adjacency_matrix;
@@ -462,7 +480,7 @@ int* csr_graph_get_degrees(Graph* graph) {
     return degrees;
 }
 
-OrderedSet* csr_graph_get_neighbors(Graph* graph, int idx_vertex_u) {
+OrderedSet* graph_get_neighbors(Graph* graph, int idx_vertex_u) {
     assert(graph != NULL);
     assert(graph->adjacency_matrix != NULL);
     assert(graph->adjacency_matrix->is_set);
@@ -498,7 +516,7 @@ OrderedSet* csr_graph_get_neighbors(Graph* graph, int idx_vertex_u) {
  * @param should_print_newline True if a newline should be printed
  * at the end of all print statements, false otherwise.
  */
-void csr_graph_print(Graph* graph, bool should_print_newline) {
+void graph_print(Graph* graph, bool should_print_newline) {
     assert(graph != NULL);
     assert(graph->adjacency_matrix != NULL);
     assert(graph->adjacency_matrix->is_set);
