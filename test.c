@@ -1,201 +1,211 @@
-/**
- * @brief Set the k
- *
- * @param graph
- * @param r_cliques
- * @param s_cliques
- * @return int*
- */
-int* set_k(Graph* graph, int r, int s) {
-    GenericLinkedList* list_r_cliques = find_k_cliques(graph, r);
-    GenericLinkedList* list_s_cliques = expand_cliques(graph, list_r_cliques);
+int fourCliqueCounter(Graph* graph) {
+    int ret = 0;                                                           // return value
+    int* triends = (int*)malloc((graph->num_vertices + 1) * sizeof(int));  // array to store triangle ends
 
-    int num_r_cliques = list_r_cliques->size;
-    int num_s_cliques = list_s_cliques->size;
+    for (int i = 0; i < graph->num_vertices; ++i)  // loop over vertices
+    {
+        for (int posj = graph->adjacency_matrix->ptr_rows[i]; posj < graph->adjacency_matrix->ptr_rows[i + 1]; ++posj)  // loop over out-neighbors of i
+        {
+            int j = graph->adjacency_matrix->idx_cols[posj];  // j is current out-neighbor
+            int count = 0;
 
-    OrderedSet** r_cliques = ordered_set_as_array(&list_r_cliques);
-    OrderedSet** s_cliques = ordered_set_as_array(&list_s_cliques);
-
-    int* s_degrees = _compute_all_s_degrees(r_cliques, s_cliques, num_r_cliques, num_s_cliques);
-
-    int* k_values = (int*)calloc(num_r_cliques, sizeof(int));
-
-    bool* is_processed = calloc(num_r_cliques, sizeof(bool));
-
-    // Map r-cliques to s-cliques and vice versa
-    OrderedSet* r_clique = NULL;
-    OrderedSet* s_clique = NULL;
-
-    OrderedSet** r_map = (OrderedSet**)calloc(num_r_cliques, sizeof(OrderedSet*));
-    OrderedSet** s_map = (OrderedSet**)calloc(num_s_cliques, sizeof(OrderedSet*));
-
-    for (int idx_r = 0; idx_r < num_r_cliques; idx_r++) {
-        r_clique = r_cliques[idx_r];
-        if (r_map[idx_r] == NULL) {
-            r_map[idx_r] = ordered_set_new(r);
-        }
-
-        for (int idx_s = 0; idx_s < num_s_cliques; idx_s++) {
-            s_clique = s_cliques[idx_s];
-            if (s_map[idx_s] == NULL) {
-                s_map[idx_s] = ordered_set_new(s);
+            for (int posk = posj + 1; posk < graph->adjacency_matrix->ptr_rows[i + 1]; ++posk)  // loop over another out-neighbor of i, that is "ahead" of j in list of out-neighbors
+            {
+                int k = graph->adjacency_matrix->idx_cols[posk];  // k is next out-neighbor
+                if (graph_get_edge(graph, j, k) != -1)            // check if edge (j,k) is present
+                {
+                    triends[count] = k;  // so (i,j,k) form a triangle. we store the fact that k forms a triangle with edge (i,j) in graph
+                    ++count;
+                }
             }
 
-            if (array_count_symmetric_difference(r_clique->elements, s_clique->elements, r_clique->size, s_clique->size) == (s - r)) {
-                ordered_set_insert(r_map[idx_r], idx_s);
-                ordered_set_insert(s_map[idx_s], idx_r);
-            }
-        }
-    }
+            for (int posk = 0; posk < count; ++posk)  // loop over all pairs of triangles formed by (i,j)
+            {
+                int k = triends[posk];                                                                       // k is vertex as index posk in triends
+                int degk = graph->adjacency_matrix->ptr_rows[k + 1] - graph->adjacency_matrix->ptr_rows[k];  // getting degree of k in graph
+                int remaining = count - posk;                                                                // number of vertices that k needs to be checked with
 
-    // For each unprocessed R with minimum S-degree
-    int num_processed = 0;
-
-    while (num_processed < num_r_cliques) {
-        int idx_min_r = array_filtered_argmin(s_degrees, num_r_cliques, is_processed);
-        k_values[idx_min_r] = s_degrees[idx_min_r];
-
-        r_clique = r_cliques[idx_min_r];
-
-        OrderedSet* current_r_map = r_map[idx_min_r];
-
-        // For each s-clique containing R
-        for (int idx_r_map = 0; idx_r_map < current_r_map->size; idx_r_map++) {
-            int idx_s = current_r_map->elements[idx_r_map];
-            OrderedSet* current_s_map = s_map[idx_s];
-
-            if (_is_s_clique_processed(current_s_map, is_processed)) {
-                continue;
-            }
-
-            for (int idx_s_map = 0; idx_s_map < current_s_map->size; idx_s_map++) {
-                int idx_neighbor_r = current_s_map->elements[idx_s_map];
-                if (s_degrees[idx_neighbor_r] > s_degrees[idx_min_r]) {
-                    s_degrees[idx_neighbor_r]--;
+                if (degk >= remaining) {
+                    // We will search all other vertices in triends in k's adj list
+                    for (int posell = posk + 1; posell < count; ++posell) {
+                        int ell = triends[posell];
+                        if (graph_get_edge(graph, k, ell) != -1)  // (k,ell) is an end, thus (i,j,k,ell) form a 4-clique
+                        {
+                            ++ret;
+                        }
+                    }
+                } else {
+                    // We will search all vertices in k's adj list in the remaining portion of triends
+                    for (int posell = graph->adjacency_matrix->ptr_rows[k]; posell < graph->adjacency_matrix->ptr_rows[k + 1]; posell++) {
+                        int ell = graph->adjacency_matrix->idx_cols[posell];
+                        if (binarySearch(triends + posk + 1, count - posk - 1, ell) != -1) {
+                            ++ret;
+                        }
+                    }
                 }
             }
         }
-
-        is_processed[idx_min_r] = true;
-        num_processed++;
     }
 
-    // Just Printing
-    int num_printed = 0;
-    int k_value = 0;
-
-    while (num_printed < num_r_cliques) {
-        int counter = 0;
-
-        for (int idx_k = 0; idx_k < num_r_cliques; idx_k++) {
-            if (k_values[idx_k] == k_value) {
-                counter++;
-                num_printed++;
-            }
-        }
-
-        printf("%d: %d\n", k_value, counter);
-        k_value++;
-    }
-
-    return k_values;
+    free(triends);
+    return ret;
 }
 
-int* approximate_k(Graph* graph, int r, int s) {
-    GenericLinkedList* list_r_cliques = find_k_cliques(graph, r);
-    GenericLinkedList* list_s_cliques = expand_cliques(graph, list_r_cliques);
+CliqueSet* _find_four_cliques(Graph* graph) {
+    assert(graph != NULL);
+    assert(graph->is_directed == false);
+    assert(graph->adjacency_matrix != NULL);
+    assert(graph->adjacency_matrix->is_set);
 
-    int num_r_cliques = list_r_cliques->size;
-    int num_s_cliques = list_s_cliques->size;
+    // 4-clique results list
+    int clique_size = 4;
+    int resize_value = 5;
+    CliqueSet* four_cliques = clique_set_new(clique_size, resize_value);
 
-    OrderedSet** r_cliques = ordered_set_as_array(&list_r_cliques);
-    OrderedSet** s_cliques = ordered_set_as_array(&list_s_cliques);
+    // Generate a degree oriented graph
+    int* undirected_degrees = graph_get_degrees(graph);
+    Graph* directed_graph = graph_make_directed(graph, _compare_degrees, undirected_degrees);
 
-    int* s_degrees = _compute_all_s_degrees(r_cliques, s_cliques, num_r_cliques, num_s_cliques);
+    // Store these variables for easy access
+    CompressedSparseRow* adjacency_matrix = directed_graph->adjacency_matrix;
+    int* ptr_rows = adjacency_matrix->ptr_rows;
+    int* idx_cols = adjacency_matrix->idx_cols;
 
-    int* k_values = (int*)calloc(num_r_cliques, sizeof(int));
+    // Loop over the (filtered) out-edges of v
+    for (vertex v = 0; v < graph->num_vertices; v++) {
+        int idx_v_begin_read = ptr_rows[v];
+        int idx_v_end_read = ptr_rows[v + 1];
 
-    // Map r-cliques to s-cliques and vice versa
-    OrderedSet* r_clique = NULL;
-    OrderedSet* s_clique = NULL;
+        for (int idx_u_nnz = idx_v_begin_read; idx_u_nnz < idx_v_end_read; idx_u_nnz++) {
+            vertex u = idx_cols[idx_u_nnz];
 
-    OrderedSet** r_map = (OrderedSet**)calloc(num_r_cliques, sizeof(OrderedSet*));
-    OrderedSet** s_map = (OrderedSet**)calloc(num_s_cliques, sizeof(OrderedSet*));
+            for (int idx_w_nnz = idx_u_nnz + 1; idx_w_nnz < idx_v_end_read; idx_w_nnz++) {
+                vertex w = idx_cols[idx_w_nnz];
 
-    for (int idx_r = 0; idx_r < num_r_cliques; idx_r++) {
-        r_clique = r_cliques[idx_r];
-        if (r_map[idx_r] == NULL) {
-            r_map[idx_r] = ordered_set_new(r);
-        }
+                // Added loop to form a 4-clique
+                for (int idx_x_nnz = idx_w_nnz + 1; idx_x_nnz < idx_v_end_read; idx_x_nnz++) {
+                    vertex x = idx_cols[idx_x_nnz];
 
-        for (int idx_s = 0; idx_s < num_s_cliques; idx_s++) {
-            s_clique = s_cliques[idx_s];
-            if (s_map[idx_s] == NULL) {
-                s_map[idx_s] = ordered_set_new(s);
-            }
+                    if (graph_get_edge(graph, u, w) > 0 && graph_get_edge(graph, u, x) > 0 && graph_get_edge(graph, w, x) > 0) {
+                        int* four_clique = (int*)calloc(4, sizeof(int));
+                        four_clique[0] = u;
+                        four_clique[1] = v;
+                        four_clique[2] = w;
+                        four_clique[3] = x;
 
-            if (array_count_symmetric_difference(r_clique->elements, s_clique->elements, r_clique->size, s_clique->size) == (s - r)) {
-                ordered_set_insert(r_map[idx_r], idx_s);
-                ordered_set_insert(s_map[idx_s], idx_r);
-            }
-        }
-    }
-
-    int* r_clique_order = array_generate_sequence(0, 1, num_r_cliques);
-    array_parallel_sort_2(r_clique_order, s_degrees, num_r_cliques, num_r_cliques, true);
-
-    for (int idx_r = 0; idx_r < num_r_cliques; idx_r++) {
-        int idx_min_r = r_clique_order[idx_r];
-        k_values[idx_min_r] = s_degrees[idx_min_r];
-        r_clique = r_cliques[idx_min_r];
-
-        OrderedSet* current_r_map = r_map[idx_min_r];
-
-        // For each s-clique containing R
-        for (int idx_r_map = 0; idx_r_map < current_r_map->size; idx_r_map++) {
-            int idx_s = current_r_map->elements[idx_r_map];
-            OrderedSet* current_s_map = s_map[idx_s];
-
-            bool is_processed = false;
-
-            for (int idx_s_map = 0; idx_s_map < current_s_map->size; idx_s_map++) {
-                int idx_neighbor_r = current_s_map->elements[idx_s_map];
-                if (idx_neighbor_r > idx_min_r) {
-                    is_processed = true;
-                    break;
-                }
-            }
-
-            if (is_processed) {
-                continue;
-            }
-
-            for (int idx_s_map = 0; idx_s_map < current_s_map->size; idx_s_map++) {
-                int idx_neighbor_r = current_s_map->elements[idx_s_map];
-                if (s_degrees[idx_neighbor_r] > s_degrees[idx_min_r]) {
-                    s_degrees[idx_neighbor_r]--;
+                        clique_set_insert(four_cliques, four_clique);
+                    }
                 }
             }
         }
     }
 
-    // Just Printing
-    int num_printed = 0;
-    int k_value = 0;
+    free(undirected_degrees);
+    graph_delete(&directed_graph);
 
-    while (num_printed < num_r_cliques) {
-        int counter = 0;
+    return four_cliques;
+}
 
-        for (int idx_k = 0; idx_k < num_r_cliques; idx_k++) {
-            if (k_values[idx_k] == k_value) {
-                counter++;
-                num_printed++;
+EdgeIdx fourCliqueCounter(CGraph* gout) {
+    EdgeIdx ret = 0;                                          // return value
+    VertexIdx* triends = new VertexIdx[gout->nVertices + 1];  // array to store triangle ends
+
+    for (VertexIdx i = 0; i < gout->nVertices; ++i)                                   // loop over vertices
+        for (VertexIdx posj = gout->offsets[i]; posj < gout->offsets[i + 1]; ++posj)  // loop over out-neighbors of i
+        {
+            VertexIdx j = gout->nbors[posj];  // j is current out-neighbor
+            VertexIdx count = 0;
+            for (VertexIdx posk = posj + 1; posk < gout->offsets[i + 1]; ++posk)  // loop over another out-neighbor of i, that is "ahead" of j in list of out-neighbors
+            {
+                VertexIdx k = gout->nbors[posk];  // k is next out-neighbor
+                                                  //                 printf("looking at tri %ld %ld %ld\n",i,j,k);
+                if (gout->isEdgeBinary(j, k))     // check if edge (j,k) is present
+                {
+                    triends[count] = k;  // so (i,j,k) form a triangle. we store the fact that k forms a triangle with edge (i,j) in digraph gout
+                    ++count;
+                }
+            }
+
+            for (VertexIdx posk = 0; posk < count; ++posk)  // loop over all pairs of triangles formed by (i,j)
+            {
+                VertexIdx k = triends[posk];                               // k is vertex as index posk in triends
+                VertexIdx degk = gout->offsets[k + 1] - gout->offsets[k];  // gettting degree of k in gout
+                VertexIdx remaining = count - posk;                        // number of vertices that k needs to be checked with
+
+                //                 printf("looking at %ld %ld %ld\n",i,j,k);
+                if (degk >= remaining) {
+                    // We will search all other vertices in triends in k's adj list
+                    for (VertexIdx posell = posk + 1; posell < count; ++posell) {
+                        VertexIdx ell = triends[posell];
+                        //                         printf("Going to triends %ld %ld %ld %ld\n",i,j,k,ell);
+                        if (gout->isEdgeBinary(k, ell))  // (k,ell) is an end, thus (i,j,k,ell) form a 4-clique
+                        {
+                            ++ret;
+                        }
+                    }
+                } else {
+                    // We will search all vertices in k's adj list in the remaining portion of triends
+                    for (EdgeIdx posell = gout->offsets[k]; posell < gout->offsets[k + 1]; posell++) {
+                        VertexIdx ell = gout->nbors[posell];
+                        if (binarySearch(triends + posk + 1, count - posk - 1, ell) != -1) {
+                            ++ret;
+                        }
+                    }
+                }
             }
         }
+    return ret;
+}
 
-        printf("%d: %d\n", k_value, counter);
-        k_value++;
-    }
+EdgeIdx fourCliqueCounter(CGraph* gout) {
+    EdgeIdx ret = 0;                                          // return value
+    VertexIdx* triends = new VertexIdx[gout->nVertices + 1];  // array to store triangle ends
 
-    return k_values;
+    vertex* triangle_ends = (vertex*)malloc(gout->num_vertices * sizeof(vertex));
+
+    for (VertexIdx i = 0; i < gout->nVertices; ++i)                                   // loop over vertices
+        for (VertexIdx posj = gout->offsets[i]; posj < gout->offsets[i + 1]; ++posj)  // loop over out-neighbors of i
+        {
+            VertexIdx j = gout->nbors[posj];  // j is current out-neighbor
+            VertexIdx count = 0;
+            for (VertexIdx posk = posj + 1; posk < gout->offsets[i + 1]; ++posk)  // loop over another out-neighbor of i, that is "ahead" of j in list of out-neighbors
+            {
+                VertexIdx k = gout->nbors[posk];  // k is next out-neighbor
+                                                  //                 printf("looking at tri %ld %ld %ld\n",i,j,k);
+                if (gout->isEdgeBinary(j, k))     // check if edge (j,k) is present
+                {
+                    triends[count] = k;  // so (i,j,k) form a triangle. we store the fact that k forms a triangle with edge (i,j) in digraph gout
+                    ++count;
+                }
+            }
+
+            for (VertexIdx posk = 0; posk < count; ++posk)  // loop over all pairs of triangles formed by (i,j)
+            {
+                VertexIdx k = triends[posk];                               // k is vertex as index posk in triends
+                VertexIdx degk = gout->offsets[k + 1] - gout->offsets[k];  // gettting degree of k in gout
+                VertexIdx remaining = count - posk;                        // number of vertices that k needs to be checked with
+
+                //                 printf("looking at %ld %ld %ld\n",i,j,k);
+                if (degk >= remaining) {
+                    // We will search all other vertices in triends in k's adj list
+                    for (VertexIdx posell = posk + 1; posell < count; ++posell) {
+                        VertexIdx ell = triends[posell];
+                        //                         printf("Going to triends %ld %ld %ld %ld\n",i,j,k,ell);
+                        if (gout->isEdgeBinary(k, ell))  // (k,ell) is an end, thus (i,j,k,ell) form a 4-clique
+                        {
+                            ++ret;
+                        }
+                    }
+                } else {
+                    // We will search all vertices in k's adj list in the remaining portion of triends
+                    for (EdgeIdx posell = gout->offsets[k]; posell < gout->offsets[k + 1]; posell++) {
+                        VertexIdx ell = gout->nbors[posell];
+                        if (binarySearch(triends + posk + 1, count - posk - 1, ell) != -1) {
+                            ++ret;
+                        }
+                    }
+                }
+            }
+        }
+    return ret;
 }

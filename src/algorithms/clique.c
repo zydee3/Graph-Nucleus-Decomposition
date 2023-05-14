@@ -11,15 +11,19 @@
  * @param degrees
  * @return int
  */
-int _compare_degrees(int row_idx, int col_idx, int* degrees) {
-    int degree_u = degrees[row_idx];
-    int degree_v = degrees[col_idx];
+int _compare_degrees(vertex u, vertex v, int* degrees) {
+    int degree_u = degrees[u];
+    int degree_v = degrees[v];
 
     if (degree_u == degree_v) {
-        return row_idx > col_idx ? row_idx : col_idx;
+        return u > v ? u : v;
     }
 
-    return degree_u > degree_v ? row_idx : col_idx;
+    return degree_u > degree_v ? u : v;
+}
+
+int _compare_vertex_id(vertex u, vertex v, int* _unused) {
+    return max(u, v);
 }
 
 // End Helper Functions
@@ -124,6 +128,19 @@ CliqueSet* _find_three_cliques(Graph* graph) {
                     clique_set_insert(triangles, triangle);
                 }
             }
+
+            for (int idx_w_nnz = idx_u_nnz + 1; idx_w_nnz < idx_v_end_read; idx_w_nnz++) {
+                vertex w = idx_cols[idx_w_nnz];
+
+                if (graph_get_edge(graph, u, w) > 0) {
+                    int* triangle = calloc(3, sizeof(int));
+                    triangle[0] = u;
+                    triangle[2] = v;
+                    triangle[1] = w;
+
+                    clique_set_insert(triangles, triangle);
+                }
+            }
         }
     }
 
@@ -133,8 +150,104 @@ CliqueSet* _find_three_cliques(Graph* graph) {
     return triangles;
 }
 
-// End Specialized Clique Functions (k=1,2,3)
-// Begin Generalized Clique Functions (k>3)
+CliqueSet* _find_four_cliques(Graph* graph) {
+    assert(graph != NULL);
+    assert(graph->is_directed == false);
+    assert(graph->adjacency_matrix != NULL);
+    assert(graph->adjacency_matrix->is_set);
+
+    // 4-clique results list
+    int clique_size = 4;
+    int resize_value = 5;
+    CliqueSet* four_cliques = clique_set_new(clique_size, resize_value);
+
+    // Generate a vertex id oriented graph
+    Graph* directed_graph = graph_make_directed(graph, _compare_vertex_id, NULL);
+    int* degrees = graph_get_degrees(directed_graph);
+
+    // Store the triangles found in the graph
+    vertex* triangle_ends = calloc(graph->num_vertices + 1, sizeof(vertex));
+
+    // Store these variables for easy access
+    CompressedSparseRow* adjacency_matrix = directed_graph->adjacency_matrix;
+    int* ptr_rows = adjacency_matrix->ptr_rows;
+    int* idx_cols = adjacency_matrix->idx_cols;
+
+    int num_triangles = 0;
+    int num_squares = 0;
+
+    // Loop over all vertices
+    for (vertex u = 0; u < graph->num_vertices; u++) {
+        int idx_u_begin_read = ptr_rows[u];
+        int idx_u_end_read = ptr_rows[u + 1];
+
+        // Loop over neighbors of u
+        for (int idx_nnz = idx_u_begin_read; idx_nnz < idx_u_end_read; idx_nnz++) {
+            vertex v1 = idx_cols[idx_nnz];
+            int count = 0;
+            // loop over another out-neighbor v2 of u, that is "ahead" of v1 in list of out-neighbors
+            // in other words, for each neighbor v1, look ahead to other neighbors v2
+            // note, the graph is directed such that the id of v1 is less than the id of v2
+            // this step looks for triangles formed by u and neighbors of u
+            for (int idx_nnz_ahead = idx_nnz + 1; idx_nnz_ahead < idx_u_end_read; idx_nnz_ahead++) {
+                vertex v2 = idx_cols[idx_nnz_ahead];
+
+                // check if there is an edge between v1 and v2
+                // since there is an edge between u, v1 and u, v2, this means there is a triangle
+                // formed by u, v1, and v2
+                if (graph_get_edge(graph, v1, v2) > 0) {
+                    num_triangles++;
+                    triangle_ends[count] = v2;
+                    count++;
+                }
+            }
+
+            // loop over all triangles formed by u, v1
+            for (int idx_ref_nnz = 0; idx_ref_nnz < count; idx_ref_nnz++) {
+                vertex v2 = triangle_ends[idx_ref_nnz];
+                vertex degree_v2 = degrees[v2];
+                vertex remaining = count - idx_ref_nnz;
+
+                int search_lower_bound = idx_ref_nnz + 1;
+
+                if (degree_v2 >= remaining) {
+                    for (int idx_ref_nnz_ahead = search_lower_bound; idx_ref_nnz_ahead < count; idx_ref_nnz_ahead++) {
+                        vertex v3 = triangle_ends[idx_ref_nnz_ahead];
+                        if (graph_get_edge(graph, v2, v3) > 0) {
+                            num_squares++;
+                        }
+                    }
+                } else {
+                    int idx_v2_begin_read = ptr_rows[v2];
+                    int idx_v2_end_read = ptr_rows[v2 + 1];
+
+                    for (int idx_v2_nnz = idx_v2_begin_read; idx_v2_nnz < idx_v2_end_read; idx_v2_nnz++) {
+                        vertex v3 = idx_cols[idx_v2_nnz];
+                        if (search_lower_bound > count - 1) {
+                            break;
+                        }
+
+                        if (v3 == u || v3 == v1) {
+                            break;
+                        }
+
+                        if (array_binary_search_range(triangle_ends, count, search_lower_bound, count - 1, v3) >= 0) {
+                            num_squares++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    graph_delete(&directed_graph);
+    free(triangle_ends);
+
+    return four_cliques;
+}
+
+// End Specialized Clique Functions (k=1,2,3,4)
+// Begin Generalized Clique Functions (k>4)
 
 /**
  * @brief This function is the recursive part of Chibi-Nishizeki's
@@ -202,6 +315,10 @@ CliqueSet* find_k_cliques(Graph* graph, int k) {
             return _find_two_cliques(graph);
         case 3:
             return _find_three_cliques(graph);
+        case 4:
+            return _find_four_cliques(graph);
+        default:
+            break;
     }
 
     // Use chiba nishizeki to find all k-cliques when k >= 4.
@@ -233,181 +350,4 @@ CliqueSet* find_k_cliques(Graph* graph, int k) {
     return cliques;
 }
 
-// End Generalized Clique Functions (k>3)
-// Begin Clique Expansion Functions
-
-/**
- * @brief Inserts param _clique into the clique set param cliques if
- * the symmetric difference of _clique to any clique in cliques is 2.
- *
- * The symmetric difference of two cliques of two cliques is 0 if they
- * are equal, 1 if they differ by one vertex, and 2 if they differ by
- * two vertices. A symmetric difference of 1 is forbidden since both
- * cliques should be of size k. A symmetric difference of 0 is also
- * forbidden since the clique sets where these cliques are derived
- * from should not contain duplicates.
- *
- * If the size of this clique set is k, then the clique set consists
- * of vertices which are contained in a k+1 clique.
- *
- * @param cliques
- * @param _clique
- * @return bool, True if the clique was insertted, false otherwise.
- */
-bool insert_clique_into_group(CliqueSet* cliques, clique _clique) {
-    assert(cliques != NULL);
-    assert(_clique != NULL);
-
-    int k = cliques->k;
-
-    for (int i = 0; i < cliques->size; i++) {
-        clique curr_clique = cliques->cliques[i];
-
-        int symm_diff = array_count_symmetric_difference(curr_clique, _clique, k, k);
-
-        // if the size is 0, then the cliques are equal. this should
-        // not happen since clique sets should not contain duplicates
-        assert(symm_diff != 0);
-
-        // if the size is 1, then we're taking the symmetric
-        // difference of two cliques with different sizes, which is
-        // impossible as all cliques should be of size k.
-        assert(symm_diff != 1);
-
-        // if the size is not 2, then the cliques are not adjacent.
-        // actually, this is a redundant check as this would have
-        // failed in any iteration (can be shown inductively)
-        if (symm_diff > 2) {
-            return false;
-        }
-
-        // symm_diff is 2, so the curr_clique and _clique are adjacent
-    }
-
-    clique_set_insert(cliques, _clique);
-    return true;
-}
-
-GenericLinkedList* group_cliques(CliqueSet* cliques) {
-    assert(cliques != NULL);
-
-    void* (*cpy)(void*) = (void* (*)(void*))clique_set_copy;
-    void (*del)(void**) = (void (*)(void**))clique_set_delete;
-    bool (*eq)(void*, void*) = (bool (*)(void*, void*))clique_set_is_equal;
-    void (*print)(void*) = (void (*)(void*))clique_set_print_n;
-
-    GenericLinkedList* groups = generic_linked_list_new(cpy, del, eq, print);
-
-    GenericNode* last_group = NULL;
-
-    for (int i = 0; i < cliques->size; i++) {
-        clique clique = cliques->cliques[i];
-        GenericNode* curr_group = groups->head;
-        bool was_inserted = false;
-
-        while (curr_group != NULL) {
-            CliqueSet* group = curr_group->data;
-
-            was_inserted = insert_clique_into_group(group, clique);
-            if (was_inserted) {
-                break;
-            }
-
-            curr_group = curr_group->next;
-        }
-
-        if (was_inserted) {
-            continue;
-        }
-
-        CliqueSet* new_group = clique_set_new(cliques->k, 1);
-        clique_set_insert(new_group, clique);
-
-        if (last_group != NULL) {
-            last_group->next = generic_node_new(new_group);
-            last_group = last_group->next;
-        } else {
-            groups->head = generic_node_new(new_group);
-            last_group = groups->head;
-        }
-
-        groups->size++;
-    }
-
-    return groups;
-}
-
-CliqueSet* reduce_groups(GenericLinkedList* groups, int k) {
-    assert(groups != NULL);
-    assert(k >= 3);
-
-    CliqueSet* reduced_cliques = clique_set_new(k + 1, groups->size);
-
-    GenericNode* curr_group = groups->head;
-
-    while (curr_group != NULL) {
-        CliqueSet* group = curr_group->data;
-
-        // if the group size is > k+1, then a duplicate must exist
-        // which is forbidden by the algorithm
-        // assert(group->size <= k + 1);
-
-        // if the group size is <= k, then the set of k-cliques cannot
-        // be reduced to a (k+1)-clique
-        if (group->size <= k) {
-            curr_group = curr_group->next;
-            continue;
-        }
-
-        // group size must be k+1 by now
-        int len_reduced_clique = 0;
-        clique reduced_clique = NULL;
-
-        // since the symmetric difference of any two cliques in this
-        // group is 2, we can take the union of any two cliques to
-        // obtain the (k+1)-clique
-        array_union(group->cliques[0], group->cliques[1], k, k, &reduced_clique, &len_reduced_clique);
-
-        // make sure the union has length (k+1)
-        assert(len_reduced_clique == k + 1);
-
-        // insert the expanded clique into the reduced clique set
-        clique_set_insert(reduced_cliques, reduced_clique);
-
-        curr_group = curr_group->next;
-    }
-
-    return reduced_cliques;
-}
-
-CliqueSet* expand_cliques(Graph* graph, CliqueSet* k_cliques) {
-    assert(graph != NULL);
-    assert(k_cliques != NULL);
-
-    if (k_cliques->size == 0) {
-        return clique_set_new(k_cliques->k + 1, 0);
-    }
-
-    int k = k_cliques->k;
-
-    if (k < 3) {
-        return find_k_cliques(graph, k + 1);
-    }
-
-    GenericLinkedList* groups = group_cliques(k_cliques);
-
-    CliqueSet* reduced_groups = reduce_groups(groups, k);
-
-    GenericNode* curr_group = groups->head;
-    while (curr_group != NULL) {
-        CliqueSet* group = curr_group->data;
-        group->size = 0;
-        curr_group = curr_group->next;
-    }
-
-    generic_linked_list_delete(&groups);
-
-    return reduced_groups;
-}
-
-// End Clique Expansion Functions
+// End Generalized Clique Functions

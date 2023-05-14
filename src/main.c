@@ -14,12 +14,12 @@ int main() {
     Stopwatch* stopwatch = stopwatch_new();
 
     char** graphs = (char**)malloc(sizeof(char*) * 5);
-    graphs[1] = "data/input/sample";
+    graphs[1] = "data/input/facebook";
     graphs[2] = "data/input/ca-netscience";
     graphs[3] = "data/input/facebook_caltech";
     graphs[4] = "data/input/facebook";
 
-    for (int i = 1; i < 5; i++) {
+    for (int i = 1; i < 2; i++) {
         Graph* graph = graph_new_from_path(graphs[i]);
         printf("Generated CSR Graph in %.2f seconds (Directed: %s, Vertices: %d, Edges: %d).\n", stopwatch_lap(stopwatch), graph->is_directed ? "True" : "False", graph->num_vertices, graph->num_edges);
 

@@ -368,70 +368,73 @@ void run_nucleus_decomposition_3_4(Graph* graph) {
 
     Stopwatch* stopwatch = stopwatch_new();
 
-    CliqueSet* triangles = find_k_cliques(graph, 3);
-    printf("Computed %d triangles in %.2f seconds.\n", triangles->size, stopwatch_lap(stopwatch));
+    // CliqueSet* triangles = find_k_cliques(graph, 3);
+    // printf("Computed %d triangles in %.2f seconds.\n", triangles->size, stopwatch_lap(stopwatch));
 
-    CliqueSet* squares = expand_cliques(graph, triangles);
+    CliqueSet* squares = find_k_cliques(graph, 4);
     printf("Computed %d squares in %.2f seconds.\n", squares->size, stopwatch_lap(stopwatch));
 
-    int* k_values = set_k(squares, triangles);
-    // printf("\nComputed k values in %.2f seconds.\n", stopwatch_lap(stopwatch));
-    // _print_k_value_count(k_values, triangles->size);
-    // array_print(k_values, triangles->size, true);
+    // clique_set_print(triangles, true);
+    // clique_set_print(squares, true);
 
-    int* k_values_updateless = set_k_updateless(squares, triangles);
-    // printf("\nComputed updateless k values in %.2f seconds.\n", stopwatch_lap(stopwatch));
-    // _print_k_value_count(k_values_updateless, triangles->size);
-    // array_print(k_values_updateless, triangles->size, true);
+    // int* k_values = set_k(squares, triangles);
+    // // printf("\nComputed k values in %.2f seconds.\n", stopwatch_lap(stopwatch));
+    // // _print_k_value_count(k_values, triangles->size);
+    // // array_print(k_values, triangles->size, true);
 
-    int num_r_cliques = triangles->size;
+    // int* k_values_updateless = set_k_updateless(squares, triangles);
+    // // printf("\nComputed updateless k values in %.2f seconds.\n", stopwatch_lap(stopwatch));
+    // // _print_k_value_count(k_values_updateless, triangles->size);
+    // // array_print(k_values_updateless, triangles->size, true);
 
-    // for (int num_samples = num_r_cliques / 10; num_samples <= num_r_cliques * 10; num_samples *= 2) {
-    //     int* k_values_monte_carlo = set_k_monte_carlo(squares, triangles, num_samples);
-    //     _print_k_value_count(k_values_monte_carlo, triangles->size);
-    //     printf("\nComputed monte carlo %d draws for k values in %.2f seconds.\n", num_samples, stopwatch_lap(stopwatch));
+    // int num_r_cliques = triangles->size;
+
+    // // for (int num_samples = num_r_cliques / 10; num_samples <= num_r_cliques * 10; num_samples *= 2) {
+    // //     int* k_values_monte_carlo = set_k_monte_carlo(squares, triangles, num_samples);
+    // //     _print_k_value_count(k_values_monte_carlo, triangles->size);
+    // //     printf("\nComputed monte carlo %d draws for k values in %.2f seconds.\n", num_samples, stopwatch_lap(stopwatch));
+    // // }
+
+    // // for (int s_limit = 1; s_limit < 5; s_limit++) {
+    // //     int* k_values_limited = set_k_limited(squares, triangles, s_limit);
+    // //     printf("\nComputed limited k values with s_limit %d in %.2f seconds.\n", s_limit, stopwatch_lap(stopwatch));
+    // //     _print_k_value_count(k_values_limited, triangles->size);
+    // // }
+
+    // int max_k_value = 0;
+    // for (int i = 0; i < num_r_cliques; i++) {
+    //     max_k_value = max(max_k_value, k_values[i]);
     // }
 
-    // for (int s_limit = 1; s_limit < 5; s_limit++) {
-    //     int* k_values_limited = set_k_limited(squares, triangles, s_limit);
-    //     printf("\nComputed limited k values with s_limit %d in %.2f seconds.\n", s_limit, stopwatch_lap(stopwatch));
-    //     _print_k_value_count(k_values_limited, triangles->size);
+    // max_k_value++;
+
+    // double* densities = (double*)calloc(max_k_value, sizeof(double));
+
+    // for (int i = 0; i < max_k_value; i++) {
+    //     int actual_count = 0;
+    //     int estimated_count = 0;
+
+    //     for (int j = 0; j < num_r_cliques; j++) {
+    //         if (k_values[j] == i) {
+    //             actual_count++;
+    //         }
+
+    //         if (k_values_updateless[j] == i) {
+    //             estimated_count++;
+    //         }
+    //     }
+
+    //     densities[i] = (double)estimated_count / (double)actual_count;
     // }
 
-    int max_k_value = 0;
-    for (int i = 0; i < num_r_cliques; i++) {
-        max_k_value = max(max_k_value, k_values[i]);
-    }
+    // for (int i = 0; i < max_k_value; i++) {
+    //     printf("%d: %.2f\n", i, densities[i]);
+    // }
 
-    max_k_value++;
-
-    double* densities = (double*)calloc(max_k_value, sizeof(double));
-
-    for (int i = 0; i < max_k_value; i++) {
-        int actual_count = 0;
-        int estimated_count = 0;
-
-        for (int j = 0; j < num_r_cliques; j++) {
-            if (k_values[j] == i) {
-                actual_count++;
-            }
-
-            if (k_values_updateless[j] == i) {
-                estimated_count++;
-            }
-        }
-
-        densities[i] = (double)estimated_count / (double)actual_count;
-    }
-
-    for (int i = 0; i < max_k_value; i++) {
-        printf("%d: %.2f\n", i, densities[i]);
-    }
-
-    printf("\n");
+    // printf("\n");
 
     graph_delete(&graph);
-    clique_set_delete(&triangles);
+    // clique_set_delete(&triangles);
     clique_set_delete(&squares);
     stopwatch_delete(&stopwatch);
 }

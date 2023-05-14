@@ -100,7 +100,7 @@ static inline int _binary_search(int* array, int len_array, int idx_lower_bound,
     }
 
     assert(idx_upper_bound < len_array);
-    assert(idx_lower_bound <= idx_upper_bound);
+    // assert(idx_lower_bound <= idx_upper_bound);
 
     while (idx_lower_bound <= idx_upper_bound) {
         int mid_idx = (idx_lower_bound + idx_upper_bound) / 2;

@@ -83,10 +83,12 @@ CompressedSparseRow* csr_new_from_file(FILE* file, int num_rows, int num_cols, i
 
     for (int idx_nnz = 0; idx_nnz <= vertices->num_nnzs; idx_nnz++) {
         if (fgets(buffer, len_buffer, file) == NULL) {
+            printf("A: Breaking: nnz=%d\n", idx_nnz);
             break;
         }
 
         if (sscanf(buffer, "%d %d %d\n", &idx_row, &idx_col, &val_edge_weight) != 3) {
+            printf("B: Breaking: nnz=%d\n", idx_nnz);
             break;
         }
 
@@ -123,6 +125,8 @@ CompressedSparseRow* csr_new_from_file(FILE* file, int num_rows, int num_cols, i
     }
 
     free(buffer);
+
+    printf("num edges: %d\n", vertices->num_nnzs);
 
     vertices->is_set = true;
     return vertices;

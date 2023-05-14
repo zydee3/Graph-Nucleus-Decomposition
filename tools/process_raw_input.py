@@ -49,9 +49,7 @@ def process_raw_input(source_path, target_path, file_name):
     num_vertices = None
     num_edges = None
     matrix = None
-    
-    skip = 0
-    
+
     unique_vertices = set()
     # Read the raw input
     # If the graph is undirected then each entry is added twice to 
@@ -67,28 +65,19 @@ def process_raw_input(source_path, target_path, file_name):
                 
             else:
                 if matrix is None:
-                    matrix = np.zeros((num_vertices, num_vertices))
-                
-                skip += 1
-                
-
-                    
+                    matrix = np.zeros((num_vertices, num_vertices), dtype=np.int8)
+            
                 source, target, weight = parse_edge_line(line, is_graph_weighted)          
                 matrix[source, target] = weight
-                
-                try:
-                    if skip % 2 == 0:
-                        matrix[source + 1, target + 1] = weight
-                except:
-                    pass
-                        
+
                 unique_vertices.add(source)
                 unique_vertices.add(target)
                 
                 if not is_graph_directed:
                     matrix[target, source] = weight
     
-    num_vertices = max(unique_vertices)
+    num_vertices = max(unique_vertices) + 1
+
     
     # Compute the number of edges in the graph to write to the file.
     # If the graph is undirected then the number of edges is half the
