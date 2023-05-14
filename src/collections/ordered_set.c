@@ -378,7 +378,6 @@ OrderedSet* ordered_set_difference(OrderedSet* set_1, OrderedSet* set_2) {
 
     // The maximum size the difference set can have is set_1->size.
     OrderedSet* difference_set = ordered_set_new(set_1->size);
-    int idx_difference_set = 0;
 
     // Iterate through both sets, removing elements from set_1 that
     // are also in set_2, to find the difference.

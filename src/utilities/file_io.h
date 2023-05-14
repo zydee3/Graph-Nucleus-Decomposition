@@ -19,7 +19,6 @@
 const char* file_extract_name_from_path(const char* file_path);
 FILE* file_open(const char* filename, const char* mode);
 
-// void file_write_graph(CompressedSparseRow* graph, const char* file_name, char* generation_time);
-// void file_write_graph_gen_res(CompressedSparseRow* graph, bool (*graph_apply_fn)(CompressedSparseRow*));
+// void file_write_cliques(const char* filename, GenericLinkedList* cliques, int k);
 
 #endif

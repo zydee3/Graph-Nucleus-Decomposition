@@ -448,6 +448,12 @@ static inline void _parallel_sort_descending_2(int* array_1, int* array_2, int i
 }
 
 static inline void _parallel_sort_ascending_3(int* array_1, int* array_2, int* array_3, int idx_lower_bound, int idx_upper_bound) {
+    assert(idx_lower_bound >= 0);
+    assert(idx_upper_bound >= 0);
+    assert(idx_lower_bound <= idx_upper_bound);
+    assert(array_1 != NULL);
+    assert(array_2 != NULL);
+
     int idx_curr_lower_bound = idx_lower_bound;
     int idx_curr_upper_bound = idx_upper_bound;
     int idx_curr_middle = (idx_curr_lower_bound + idx_curr_upper_bound) / 2;
@@ -654,15 +660,6 @@ int array_binary_search_range_or_closest(int* array, int len_array, int idx_begi
     return _binary_search(array, len_array, idx_begin, idx_end, val_target, true);
 }
 
-// End Search Functions (Binary)
-// Begin Manipulation Functions
-
-void array_clear(int* array, int len_array) {
-    assert(array != NULL);
-    assert(len_array >= 0);
-    memset(array, 0, len_array * sizeof(int));
-}
-
 /**
  * @brief Shifts the elements in an array to the left or right
  * outwards by a specified amount, resizing if necessary and if
@@ -754,7 +751,10 @@ void array_reverse(int* array, int array_size, int idx_begin_read, int idx_end_r
     int right_idx = idx_end_read;
 
     while (left_idx < right_idx) {
-        array_swap(array, array_size, left_idx, right_idx);
+        int temp = array[left_idx];
+        array[left_idx] = array[right_idx];
+        array[right_idx] = temp;
+
         left_idx++;
         right_idx--;
     }
@@ -799,7 +799,9 @@ int* array_shuffle(int* array, int len_array, bool use_original_array) {
     for (int i = len_array - 1; i > 0; i--) {
         int j = rand() % (i + 1);
 
-        array_swap(shuffled_array, len_array, i, j);
+        int temp = shuffled_array[i];
+        shuffled_array[i] = shuffled_array[j];
+        shuffled_array[j] = temp;
     }
 
     return shuffled_array;
@@ -823,12 +825,12 @@ int* array_shuffle(int* array, int len_array, bool use_original_array) {
  */
 void array_resize(int** ptr_array, int len_array, int len_new_array) {
     assert(ptr_array != NULL);
+    assert(*ptr_array != NULL);
     assert(len_array >= 0);
     assert(len_new_array >= 0);
 
     int len_change = len_new_array - len_array;
     if (len_change < 0) {
-        assert(*ptr_array != NULL);
         _shrink(ptr_array, len_array, len_new_array);
     } else if (len_change > 0) {
         _expand(ptr_array, len_array, len_new_array);
@@ -893,20 +895,17 @@ void array_parallel_sort_3(int* array_1, int* array_2, int* array_3, int len_arr
     if (is_ascending) {
         _parallel_sort_ascending_3(array_1, array_2, array_3, 0, len_array_1 - 1);
         cmp = cmp_ints_asc;
-        // _parallel_sort_c_based_on_b_maintain_a_ascending(array_1, array_2, array_3, len_array_1);
     } else {
         _parallel_sort_descending_3(array_1, array_2, array_3, 0, len_array_1 - 1);
         cmp = cmp_ints_dsc;
-        // _parallel_sort_c_based_on_b_maintain_a_descending(array_1, array_2, array_3, len_array_1);
     }
 
     int idx_prev = 0;
 
-    for (int idx_curr = 0; idx_curr <= len_array_1; idx_curr++) {
+    for (int idx_curr = 0; idx_curr < len_array_1; idx_curr++) {
         if (array_1[idx_curr] != array_1[idx_prev]) {
             int len_sort = idx_curr - idx_prev;
             qsort(&(array_2[idx_prev]), len_sort, sizeof(int), cmp);
-            // array_parallel_sort_2(&(array_2[idx_prev]), &(array_3[idx_prev]), len_sort, len_sort, is_ascending);
             idx_prev = idx_curr;
         }
     }
@@ -965,6 +964,51 @@ int array_count_symmetric_difference(int* array_1, int* array_2, int len_array_1
     num_differences += len_array_2 - idx_array_2;
 
     return num_differences;
+}
+
+void array_union(int* array_1, int* array_2, int len_array_1, int len_array_2, int** ptr_array_union, int* len_array_union) {
+    assert(array_1 != NULL);
+    assert(array_2 != NULL);
+
+    int* array_union = malloc((len_array_1 + len_array_2) * sizeof(int));
+
+    int idx_array_1 = 0;
+    int idx_array_2 = 0;
+    int idx_union = 0;
+
+    while (idx_array_1 < len_array_1 && idx_array_2 < len_array_2) {
+        if (array_1[idx_array_1] < array_2[idx_array_2]) {
+            array_union[idx_union] = array_1[idx_array_1];
+            idx_array_1++;
+        } else if (array_1[idx_array_1] > array_2[idx_array_2]) {
+            array_union[idx_union] = array_2[idx_array_2];
+            idx_array_2++;
+        } else {
+            array_union[idx_union] = array_1[idx_array_1];
+            idx_array_1++;
+            idx_array_2++;
+        }
+
+        idx_union++;
+    }
+
+    while (idx_array_1 < len_array_1) {
+        array_union[idx_union] = array_1[idx_array_1];
+        idx_array_1++;
+        idx_union++;
+    }
+
+    while (idx_array_2 < len_array_2) {
+        array_union[idx_union] = array_2[idx_array_2];
+        idx_array_2++;
+        idx_union++;
+    }
+
+    array_union = realloc(array_union, idx_union * sizeof(int));
+    assert(array_union != NULL);
+
+    *ptr_array_union = array_union;
+    *len_array_union = idx_union;
 }
 
 // End Manipulation Functions

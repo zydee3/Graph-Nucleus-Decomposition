@@ -14,6 +14,10 @@
 #include "ordered_set.h"
 
 typedef int vertex;
+typedef int* clique;
+typedef int* edge;
+typedef int* triangle;
+typedef int* square;
 
 typedef struct Graph {
     int num_vertices;

@@ -34,7 +34,7 @@ TEST_OBJS = $(TEST_SRCS:$(TEST_DIR)/%.c=$(OBJS_DIR)/%.o)
 MAIN_EXEC = $(OBJS_DIR)/graphs
 TEST_EXEC = $(OBJS_DIR)/tests
 
-all: $(MAIN_EXEC) $(TEST_EXEC)
+all: $(MAIN_EXEC) $(TEST_EXEC) $(TRIANGLES_EXEC)
 
 $(MAIN_EXEC): $(MAIN_OBJS) $(ALGS_OBJS) $(COLS_OBJS) $(UTIL_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^

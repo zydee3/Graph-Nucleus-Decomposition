@@ -347,32 +347,6 @@ void test_array_binary_search_range_or_closest() {
 // Begin Manipulation Unit Tests
 
 /**
- * @brief A unit test for array_clear.
- *
- * This function generates a sequence of numbers and then immediately
- * clears the array. This is repeated a specified number of times.
- *
- * The test is considered passing if the array_clear function clears
- * the array by setting all elements to 0.
- */
-void test_array_clear() {
-    bool is_passing = true;
-    int num_itrs = 10;
-
-    int* answer = array_generate_sequence(0, 0, NUM_ELEMS);
-
-    for (int i = 0; i < num_itrs; i++) {
-        int* test = array_generate_sequence_shuffled(0, 1 * i, NUM_ELEMS);
-        array_clear(test, NUM_ELEMS);
-        is_passing = is_passing && array_is_equal(test, answer, NUM_ELEMS, NUM_ELEMS);
-        free(test);
-    }
-
-    free(answer);
-    print_test_result(__FILE__, __func__, is_passing);
-}
-
-/**
  * @brief A unit test for array_binary_search.
  *
  * This function generates a sequence of numbers from 0 to
@@ -546,7 +520,6 @@ void test_array_util() {
     test_array_binary_search_range_or_closest();
 
     // Maniuplation Functions
-    test_array_clear();
     test_array_shift_out();
 
     // Turns out realloc can return the same block of memory and

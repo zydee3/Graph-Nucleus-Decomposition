@@ -32,6 +32,7 @@ bool generic_linked_list_is_equal(GenericLinkedList* list_a, GenericLinkedList* 
 void generic_linked_list_print(GenericLinkedList* list);
 
 bool generic_linked_list_insert(GenericLinkedList* list, void* data);
+bool generic_linked_list_prepend(GenericLinkedList* list, void* data);
 bool generic_linked_list_remove(GenericLinkedList* list, void* data);
 bool generic_linked_list_contains(GenericLinkedList* list, void* data);
 bool generic_linked_list_is_empty(GenericLinkedList* list);

@@ -1,18 +1,15 @@
 #include "nucleus_decomposition.h"
 
-int _compute_s_degree(OrderedSet* r_clique, OrderedSet** s_cliques, int num_s_cliques) {
-    assert(r_clique != NULL);
+int _compute_s_degree(CliqueSet* s_cliques, clique r_clique, int r_k) {
     assert(s_cliques != NULL);
-    assert(num_s_cliques > 0);
+    assert(r_clique != NULL);
 
     int s_degree = 0;
 
-    for (int idx_s_clique = 0; idx_s_clique < num_s_cliques; idx_s_clique++) {
-        OrderedSet* s_clique = s_cliques[idx_s_clique];
+    for (int i = 0; i < s_cliques->size; i++) {
+        clique s_clique = s_cliques->cliques[i];
 
-        int symm_diff_size = array_count_symmetric_difference(r_clique->elements, s_clique->elements, r_clique->size, s_clique->size);
-
-        if (symm_diff_size == 1) {
+        if (array_count_symmetric_difference(s_clique, r_clique, s_cliques->k, r_k) == 1) {
             s_degree++;
         }
     }
@@ -20,16 +17,14 @@ int _compute_s_degree(OrderedSet* r_clique, OrderedSet** s_cliques, int num_s_cl
     return s_degree;
 }
 
-int* _compute_all_s_degrees(OrderedSet** r_cliques, OrderedSet** s_cliques, int num_r_cliques, int num_s_cliques) {
-    assert(r_cliques != NULL);
+int* _compute_all_s_degrees(CliqueSet* s_cliques, CliqueSet* r_cliques) {
     assert(s_cliques != NULL);
-    assert(num_r_cliques > 0);
-    assert(num_s_cliques > 0);
+    assert(r_cliques != NULL);
 
-    int* s_degrees = (int*)calloc(num_r_cliques, sizeof(int));
+    int* s_degrees = (int*)calloc(r_cliques->size, sizeof(int));
 
-    for (int idx_r_clique = 0; idx_r_clique < num_r_cliques; idx_r_clique++) {
-        s_degrees[idx_r_clique] = _compute_s_degree(r_cliques[idx_r_clique], s_cliques, num_s_cliques);
+    for (int idx_r_clique = 0; idx_r_clique < r_cliques->size; idx_r_clique++) {
+        s_degrees[idx_r_clique] = _compute_s_degree(s_cliques, r_cliques->cliques[idx_r_clique], r_cliques->k);
     }
 
     return s_degrees;
@@ -46,169 +41,153 @@ bool _is_s_clique_processed(OrderedSet* s_map, bool* is_processed) {
     return false;
 }
 
-/**
- * @brief Set the k
- *
- * @param graph
- * @param r_cliques
- * @param s_cliques
- * @return int*
- */
-int* set_k(Graph* graph, int r, int s) {
-    GenericLinkedList* list_r_cliques = find_k_cliques(graph, r);
-    GenericLinkedList* list_s_cliques = expand_cliques(graph, list_r_cliques);
+MappedCliques* _map_r_s_cliques(CliqueSet* s_cliques, CliqueSet* r_cliques) {
+    assert(s_cliques != NULL);
+    assert(r_cliques != NULL);
 
-    int num_r_cliques = list_r_cliques->size;
-    int num_s_cliques = list_s_cliques->size;
+    int len_s_clique = s_cliques->k;
+    int len_r_clique = r_cliques->k;
 
-    OrderedSet** r_cliques = ordered_set_as_array(&list_r_cliques);
-    OrderedSet** s_cliques = ordered_set_as_array(&list_s_cliques);
+    int num_s_cliques = s_cliques->size;
+    int num_r_cliques = r_cliques->size;
 
-    int* s_degrees = _compute_all_s_degrees(r_cliques, s_cliques, num_r_cliques, num_s_cliques);
+    MappedCliques* mapped_cliques = (MappedCliques*)malloc(sizeof(MappedCliques));
+    mapped_cliques->s_map = (OrderedSet**)calloc(num_s_cliques, sizeof(OrderedSet*));
+    mapped_cliques->r_map = (OrderedSet**)calloc(num_r_cliques, sizeof(OrderedSet*));
 
-    int* k_values = (int*)calloc(num_r_cliques, sizeof(int));
+    for (int idx_r_clique = 0; idx_r_clique < num_r_cliques; idx_r_clique++) {
+        clique r_clique = r_cliques->cliques[idx_r_clique];
+        OrderedSet* r_map = mapped_cliques->r_map[idx_r_clique];
 
-    bool* is_processed = calloc(num_r_cliques, sizeof(bool));
-
-    // Map r-cliques to s-cliques and vice versa
-    OrderedSet* r_clique = NULL;
-    OrderedSet* s_clique = NULL;
-
-    OrderedSet** r_map = (OrderedSet**)calloc(num_r_cliques, sizeof(OrderedSet*));
-    OrderedSet** s_map = (OrderedSet**)calloc(num_s_cliques, sizeof(OrderedSet*));
-
-    for (int idx_r = 0; idx_r < num_r_cliques; idx_r++) {
-        r_clique = r_cliques[idx_r];
-        if (r_map[idx_r] == NULL) {
-            r_map[idx_r] = ordered_set_new(r);
+        if (r_map == NULL) {
+            r_map = ordered_set_new(1);
+            mapped_cliques->r_map[idx_r_clique] = r_map;
         }
 
-        for (int idx_s = 0; idx_s < num_s_cliques; idx_s++) {
-            s_clique = s_cliques[idx_s];
-            if (s_map[idx_s] == NULL) {
-                s_map[idx_s] = ordered_set_new(s);
+        for (int idx_s_clique = 0; idx_s_clique < num_s_cliques; idx_s_clique++) {
+            clique s_clique = s_cliques->cliques[idx_s_clique];
+            OrderedSet* s_map = mapped_cliques->s_map[idx_s_clique];
+
+            if (s_map == NULL) {
+                s_map = ordered_set_new(1);
+                mapped_cliques->s_map[idx_s_clique] = s_map;
             }
 
-            if (array_count_symmetric_difference(r_clique->elements, s_clique->elements, r_clique->size, s_clique->size) == (s - r)) {
-                ordered_set_insert(r_map[idx_r], idx_s);
-                ordered_set_insert(s_map[idx_s], idx_r);
+            if (array_count_symmetric_difference(s_clique, r_clique, len_s_clique, len_r_clique) == 1) {
+                ordered_set_insert(r_map, idx_s_clique);
+                ordered_set_insert(s_map, idx_r_clique);
             }
         }
     }
 
-    // For each unprocessed R with minimum S-degree
+    return mapped_cliques;
+}
+
+void _print_k_value_count(int* k_values, int num_k_values) {
+    int num_printed = 0;
+    int k_value = 0;
+
+    while (num_printed < num_k_values) {
+        int num_at_k = 0;
+
+        for (int idx_k = 0; idx_k < num_k_values; idx_k++) {
+            if (k_values[idx_k] == k_value) {
+                num_at_k++;
+            }
+        }
+
+        printf("%d: %d\n", k_value, num_at_k);
+        num_printed += num_at_k;
+        k_value++;
+    }
+}
+
+int* set_k(CliqueSet* s_cliques, CliqueSet* r_cliques) {
+    assert(s_cliques != NULL);
+    assert(r_cliques != NULL);
+
+    int* k_values = (int*)calloc(r_cliques->size, sizeof(int));
+    int* s_degrees = _compute_all_s_degrees(s_cliques, r_cliques);
+
     int num_processed = 0;
+    bool* is_processed = (bool*)calloc(r_cliques->size, sizeof(bool));
 
-    while (num_processed < num_r_cliques) {
-        int idx_min_r = array_filtered_argmin(s_degrees, num_r_cliques, is_processed);
-        k_values[idx_min_r] = s_degrees[idx_min_r];
+    MappedCliques* mapped_cliques = _map_r_s_cliques(s_cliques, r_cliques);
+    OrderedSet** s_map = mapped_cliques->s_map;
+    OrderedSet** r_map = mapped_cliques->r_map;
 
-        r_clique = r_cliques[idx_min_r];
+    while (num_processed < r_cliques->size) {
+        int idx_min_s_degree = array_filtered_argmin(s_degrees, r_cliques->size, is_processed);
+        k_values[idx_min_s_degree] = s_degrees[idx_min_s_degree];
 
-        OrderedSet* current_r_map = r_map[idx_min_r];
+        OrderedSet* curr_r_map = r_map[idx_min_s_degree];
+        for (int idx_r_map = 0; idx_r_map < curr_r_map->size; idx_r_map++) {
+            int idx_s_clique = curr_r_map->elements[idx_r_map];
+            OrderedSet* curr_s_map = s_map[idx_s_clique];
 
-        // For each s-clique containing R
-        for (int idx_r_map = 0; idx_r_map < current_r_map->size; idx_r_map++) {
-            int idx_s = current_r_map->elements[idx_r_map];
-            OrderedSet* current_s_map = s_map[idx_s];
-
-            if (_is_s_clique_processed(current_s_map, is_processed)) {
+            if (_is_s_clique_processed(curr_s_map, is_processed)) {
                 continue;
             }
 
-            for (int idx_s_map = 0; idx_s_map < current_s_map->size; idx_s_map++) {
-                int idx_neighbor_r = current_s_map->elements[idx_s_map];
-                if (s_degrees[idx_neighbor_r] > s_degrees[idx_min_r]) {
-                    s_degrees[idx_neighbor_r]--;
+            for (int idx_s_map = 0; idx_s_map < curr_s_map->size; idx_s_map++) {
+                int idx_neighbor_r_clique = curr_s_map->elements[idx_s_map];
+                if (s_degrees[idx_neighbor_r_clique] > s_degrees[idx_min_s_degree]) {
+                    s_degrees[idx_neighbor_r_clique]--;
                 }
             }
         }
 
-        is_processed[idx_min_r] = true;
+        is_processed[idx_min_s_degree] = true;
         num_processed++;
     }
 
-    // Just Printing
-    int num_printed = 0;
-    int k_value = 0;
-
-    while (num_printed < num_r_cliques) {
-        int counter = 0;
-
-        for (int idx_k = 0; idx_k < num_r_cliques; idx_k++) {
-            if (k_values[idx_k] == k_value) {
-                counter++;
-                num_printed++;
-            }
-        }
-
-        printf("%d: %d\n", k_value, counter);
-        k_value++;
+    for (int i = 0; i < r_cliques->size; i++) {
+        ordered_set_delete(&r_map[i]);
     }
+
+    for (int i = 0; i < s_cliques->size; i++) {
+        ordered_set_delete(&s_map[i]);
+    }
+
+    free(r_map);
+    free(s_map);
+    free(mapped_cliques);
+    free(s_degrees);
+    free(is_processed);
 
     return k_values;
 }
 
-int* approximate_k(Graph* graph, int r, int s) {
-        GenericLinkedList* list_r_cliques = find_k_cliques(graph, r);
-    GenericLinkedList* list_s_cliques = expand_cliques(graph, list_r_cliques);
+int* set_k_updateless(CliqueSet* s_cliques, CliqueSet* r_cliques) {
+    assert(s_cliques != NULL);
+    assert(r_cliques != NULL);
 
-    int num_r_cliques = list_r_cliques->size;
-    int num_s_cliques = list_s_cliques->size;
-
-    OrderedSet** r_cliques = ordered_set_as_array(&list_r_cliques);
-    OrderedSet** s_cliques = ordered_set_as_array(&list_s_cliques);
-
-    int* s_degrees = _compute_all_s_degrees(r_cliques, s_cliques, num_r_cliques, num_s_cliques);
+    int num_r_cliques = r_cliques->size;
 
     int* k_values = (int*)calloc(num_r_cliques, sizeof(int));
+    int* s_degrees = _compute_all_s_degrees(s_cliques, r_cliques);
 
-    // Map r-cliques to s-cliques and vice versa
-    OrderedSet* r_clique = NULL;
-    OrderedSet* s_clique = NULL;
+    MappedCliques* mapped_cliques = _map_r_s_cliques(s_cliques, r_cliques);
+    OrderedSet** s_map = mapped_cliques->s_map;
+    OrderedSet** r_map = mapped_cliques->r_map;
 
-    OrderedSet** r_map = (OrderedSet**)calloc(num_r_cliques, sizeof(OrderedSet*));
-    OrderedSet** s_map = (OrderedSet**)calloc(num_s_cliques, sizeof(OrderedSet*));
+    int* processing_order = array_generate_sequence(0, 1, num_r_cliques);
+    array_parallel_sort_2(processing_order, s_degrees, num_r_cliques, num_r_cliques, false);
 
-    for (int idx_r = 0; idx_r < num_r_cliques; idx_r++) {
-        r_clique = r_cliques[idx_r];
-        if (r_map[idx_r] == NULL) {
-            r_map[idx_r] = ordered_set_new(r);
-        }
+    for (int i = 0; i < num_r_cliques; i++) {
+        int idx_next_r_clique = processing_order[i];
+        k_values[idx_next_r_clique] = s_degrees[idx_next_r_clique];
 
-        for (int idx_s = 0; idx_s < num_s_cliques; idx_s++) {
-            s_clique = s_cliques[idx_s];
-            if (s_map[idx_s] == NULL) {
-                s_map[idx_s] = ordered_set_new(s);
-            }
-
-            if (array_count_symmetric_difference(r_clique->elements, s_clique->elements, r_clique->size, s_clique->size) == (s - r)) {
-                ordered_set_insert(r_map[idx_r], idx_s);
-                ordered_set_insert(s_map[idx_s], idx_r);
-            }
-        }
-    }
-
-    int* r_clique_order = array_generate_sequence(0, 1, num_r_cliques);
-    array_parallel_sort_2(r_clique_order, s_degrees, num_r_cliques, num_r_cliques, true);
-
-    for (int idx_r = 0; idx_r < num_r_cliques; idx_r++) {
-        int idx_min_r = r_clique_order[idx_r];
-        k_values[idx_min_r] = s_degrees[idx_min_r];
-        r_clique = r_cliques[idx_min_r];
-
-        OrderedSet* current_r_map = r_map[idx_min_r];
-
-        // For each s-clique containing R
-        for (int idx_r_map = 0; idx_r_map < current_r_map->size; idx_r_map++) {
-            int idx_s = current_r_map->elements[idx_r_map];
-            OrderedSet* current_s_map = s_map[idx_s];
+        OrderedSet* curr_r_map = r_map[idx_next_r_clique];
+        for (int idx_r_map = 0; idx_r_map < curr_r_map->size; idx_r_map++) {
+            int idx_s_clique = curr_r_map->elements[idx_r_map];
+            OrderedSet* curr_s_map = s_map[idx_s_clique];
 
             bool is_processed = false;
 
-            for (int idx_s_map = 0; idx_s_map < current_s_map->size; idx_s_map++) {
-                int idx_neighbor_r = current_s_map->elements[idx_s_map];
-                if (idx_neighbor_r > idx_min_r) {
+            for (int idx_s_map = 0; idx_s_map < curr_s_map->size; idx_s_map++) {
+                int idx_neighbor_r_clique = curr_s_map->elements[idx_s_map];
+                if (idx_neighbor_r_clique > idx_next_r_clique) {
                     is_processed = true;
                     break;
                 }
@@ -218,32 +197,168 @@ int* approximate_k(Graph* graph, int r, int s) {
                 continue;
             }
 
-            for (int idx_s_map = 0; idx_s_map < current_s_map->size; idx_s_map++) {
-                int idx_neighbor_r = current_s_map->elements[idx_s_map];
-                if (s_degrees[idx_neighbor_r] > s_degrees[idx_min_r]) {
-                    s_degrees[idx_neighbor_r]--;
+            for (int idx_s_map = 0; idx_s_map < curr_s_map->size; idx_s_map++) {
+                int idx_neighbor_r_clique = curr_s_map->elements[idx_s_map];
+                if (s_degrees[idx_neighbor_r_clique] > s_degrees[idx_next_r_clique]) {
+                    s_degrees[idx_neighbor_r_clique]--;
                 }
             }
         }
     }
 
-    // Just Printing
-    int num_printed = 0;
-    int k_value = 0;
+    for (int i = 0; i < r_cliques->size; i++) {
+        ordered_set_delete(&r_map[i]);
+    }
 
-    while (num_printed < num_r_cliques) {
-        int counter = 0;
+    for (int i = 0; i < s_cliques->size; i++) {
+        ordered_set_delete(&s_map[i]);
+    }
 
-        for (int idx_k = 0; idx_k < num_r_cliques; idx_k++) {
-            if (k_values[idx_k] == k_value) {
-                counter++;
-                num_printed++;
+    free(r_map);
+    free(s_map);
+    free(mapped_cliques);
+    free(s_degrees);
+
+    return k_values;
+}
+
+int* set_k_limited(CliqueSet* s_cliques, CliqueSet* r_cliques, int s_limit) {
+    assert(s_cliques != NULL);
+    assert(r_cliques != NULL);
+
+    int* k_values = (int*)calloc(r_cliques->size, sizeof(int));
+    int* s_degrees = _compute_all_s_degrees(s_cliques, r_cliques);
+
+    int num_processed = 0;
+    bool* is_processed = (bool*)calloc(r_cliques->size, sizeof(bool));
+
+    MappedCliques* mapped_cliques = _map_r_s_cliques(s_cliques, r_cliques);
+    OrderedSet** s_map = mapped_cliques->s_map;
+    OrderedSet** r_map = mapped_cliques->r_map;
+
+    while (num_processed < r_cliques->size) {
+        int idx_min_s_degree = array_filtered_argmin(s_degrees, r_cliques->size, is_processed);
+        k_values[idx_min_s_degree] = s_degrees[idx_min_s_degree];
+
+        OrderedSet* curr_r_map = r_map[idx_min_s_degree];
+        for (int idx_r_map = 0; idx_r_map < min(s_limit, curr_r_map->size); idx_r_map++) {
+            int idx_s_clique = curr_r_map->elements[idx_r_map];
+            OrderedSet* curr_s_map = s_map[idx_s_clique];
+
+            if (_is_s_clique_processed(curr_s_map, is_processed)) {
+                continue;
+            }
+
+            for (int idx_s_map = 0; idx_s_map < curr_s_map->size; idx_s_map++) {
+                int idx_neighbor_r_clique = curr_s_map->elements[idx_s_map];
+                if (s_degrees[idx_neighbor_r_clique] > s_degrees[idx_min_s_degree]) {
+                    s_degrees[idx_neighbor_r_clique]--;
+                }
             }
         }
 
-        printf("%d: %d\n", k_value, counter);
-        k_value++;
+        is_processed[idx_min_s_degree] = true;
+        num_processed++;
     }
+
+    for (int i = 0; i < r_cliques->size; i++) {
+        ordered_set_delete(&r_map[i]);
+    }
+
+    for (int i = 0; i < s_cliques->size; i++) {
+        ordered_set_delete(&s_map[i]);
+    }
+
+    free(r_map);
+    free(s_map);
+    free(mapped_cliques);
+    free(s_degrees);
+    free(is_processed);
+
+    return k_values;
+}
+
+int* set_k_monte_carlo(CliqueSet* s_cliques, CliqueSet* r_cliques, int num_samples) {
+    assert(s_cliques != NULL);
+    assert(r_cliques != NULL);
+
+    int* k_values = (int*)calloc(r_cliques->size, sizeof(int));
+    int* s_degrees = _compute_all_s_degrees(s_cliques, r_cliques);
+
+    for (int i = 0; i < num_samples; i++) {
+        int idx_random_r_clique = rand() % r_cliques->size;
+        k_values[idx_random_r_clique] += s_degrees[idx_random_r_clique];
+    }
+
+    for (int idx_r_clique = 0; idx_r_clique < r_cliques->size; idx_r_clique++) {
+        k_values[idx_r_clique] /= num_samples;
+    }
+
+    free(s_degrees);
+
+    return k_values;
+}
+
+int* set_k_updateless_limited(CliqueSet* s_cliques, CliqueSet* r_cliques, int limit) {
+    assert(s_cliques != NULL);
+    assert(r_cliques != NULL);
+
+    int num_r_cliques = r_cliques->size;
+
+    int* k_values = (int*)calloc(num_r_cliques, sizeof(int));
+    int* s_degrees = _compute_all_s_degrees(s_cliques, r_cliques);
+
+    MappedCliques* mapped_cliques = _map_r_s_cliques(s_cliques, r_cliques);
+    OrderedSet** s_map = mapped_cliques->s_map;
+    OrderedSet** r_map = mapped_cliques->r_map;
+
+    int* processing_order = array_generate_sequence(0, 1, num_r_cliques);
+    array_parallel_sort_2(processing_order, s_degrees, num_r_cliques, num_r_cliques, true);
+
+    for (int i = 0; i < num_r_cliques; i++) {
+        int idx_next_r_clique = processing_order[i];
+        k_values[idx_next_r_clique] = s_degrees[idx_next_r_clique];
+
+        OrderedSet* curr_r_map = r_map[idx_next_r_clique];
+        for (int idx_r_map = 0; idx_r_map < min(limit, curr_r_map->size); idx_r_map++) {
+            int idx_s_clique = curr_r_map->elements[idx_r_map];
+            OrderedSet* curr_s_map = s_map[idx_s_clique];
+
+            bool is_processed = false;
+
+            for (int idx_s_map = 0; idx_s_map < curr_s_map->size; idx_s_map++) {
+                int idx_neighbor_r_clique = curr_s_map->elements[idx_s_map];
+                if (idx_neighbor_r_clique > idx_next_r_clique) {
+                    is_processed = true;
+                    break;
+                }
+            }
+
+            if (is_processed) {
+                continue;
+            }
+
+            for (int idx_s_map = 0; idx_s_map < curr_s_map->size; idx_s_map++) {
+                int idx_neighbor_r_clique = curr_s_map->elements[idx_s_map];
+                if (s_degrees[idx_neighbor_r_clique] > s_degrees[idx_next_r_clique]) {
+                    s_degrees[idx_neighbor_r_clique]--;
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < r_cliques->size; i++) {
+        ordered_set_delete(&r_map[i]);
+    }
+
+    for (int i = 0; i < s_cliques->size; i++) {
+        ordered_set_delete(&s_map[i]);
+    }
+
+    free(r_map);
+    free(s_map);
+    free(mapped_cliques);
+    free(s_degrees);
 
     return k_values;
 }
@@ -251,9 +366,72 @@ int* approximate_k(Graph* graph, int r, int s) {
 void run_nucleus_decomposition_3_4(Graph* graph) {
     assert(graph != NULL);
 
-    // set_k(graph, 3, 4);
-    // int* k_values = set_k(graph, 3, 4);
-    set_k(graph, 3, 4);
-    // printf("\n\n\n");
-    // approximate_k(graph, 3, 4);
+    Stopwatch* stopwatch = stopwatch_new();
+
+    CliqueSet* triangles = find_k_cliques(graph, 3);
+    printf("Computed %d triangles in %.2f seconds.\n", triangles->size, stopwatch_lap(stopwatch));
+
+    CliqueSet* squares = expand_cliques(graph, triangles);
+    printf("Computed %d squares in %.2f seconds.\n", squares->size, stopwatch_lap(stopwatch));
+
+    int* k_values = set_k(squares, triangles);
+    // printf("\nComputed k values in %.2f seconds.\n", stopwatch_lap(stopwatch));
+    // _print_k_value_count(k_values, triangles->size);
+    // array_print(k_values, triangles->size, true);
+
+    int* k_values_updateless = set_k_updateless(squares, triangles);
+    // printf("\nComputed updateless k values in %.2f seconds.\n", stopwatch_lap(stopwatch));
+    // _print_k_value_count(k_values_updateless, triangles->size);
+    // array_print(k_values_updateless, triangles->size, true);
+
+    int num_r_cliques = triangles->size;
+
+    // for (int num_samples = num_r_cliques / 10; num_samples <= num_r_cliques * 10; num_samples *= 2) {
+    //     int* k_values_monte_carlo = set_k_monte_carlo(squares, triangles, num_samples);
+    //     _print_k_value_count(k_values_monte_carlo, triangles->size);
+    //     printf("\nComputed monte carlo %d draws for k values in %.2f seconds.\n", num_samples, stopwatch_lap(stopwatch));
+    // }
+
+    // for (int s_limit = 1; s_limit < 5; s_limit++) {
+    //     int* k_values_limited = set_k_limited(squares, triangles, s_limit);
+    //     printf("\nComputed limited k values with s_limit %d in %.2f seconds.\n", s_limit, stopwatch_lap(stopwatch));
+    //     _print_k_value_count(k_values_limited, triangles->size);
+    // }
+
+    int max_k_value = 0;
+    for (int i = 0; i < num_r_cliques; i++) {
+        max_k_value = max(max_k_value, k_values[i]);
+    }
+
+    max_k_value++;
+
+    double* densities = (double*)calloc(max_k_value, sizeof(double));
+
+    for (int i = 0; i < max_k_value; i++) {
+        int actual_count = 0;
+        int estimated_count = 0;
+
+        for (int j = 0; j < num_r_cliques; j++) {
+            if (k_values[j] == i) {
+                actual_count++;
+            }
+
+            if (k_values_updateless[j] == i) {
+                estimated_count++;
+            }
+        }
+
+        densities[i] = (double)estimated_count / (double)actual_count;
+    }
+
+    for (int i = 0; i < max_k_value; i++) {
+        printf("%d: %.2f\n", i, densities[i]);
+    }
+
+    printf("\n");
+
+    graph_delete(&graph);
+    clique_set_delete(&triangles);
+    clique_set_delete(&squares);
+    stopwatch_delete(&stopwatch);
 }

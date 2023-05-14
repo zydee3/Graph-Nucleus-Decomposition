@@ -119,6 +119,20 @@ bool generic_linked_list_insert(GenericLinkedList* list, void* data) {
     return true;
 }
 
+bool generic_linked_list_prepend(GenericLinkedList* list, void* data) {
+    assert(list != NULL);
+    assert(data != NULL);
+
+    GenericNode* head = list->head;
+    GenericNode* node = generic_node_new(data);
+
+    node->next = head;
+    list->head = node;
+
+    list->size++;
+    return true;
+}
+
 bool generic_linked_list_remove(GenericLinkedList* list, void* data) {
     assert(list != NULL && data != NULL);
 

@@ -238,6 +238,8 @@ Graph* graph_copy(Graph* graph) {
     assert(graph->adjacency_matrix->is_set);
 
     Graph* copy = graph_new(graph->num_vertices, graph->num_edges, graph->is_directed);
+    csr_delete(&copy->adjacency_matrix);
+
     copy->adjacency_matrix = csr_copy(graph->adjacency_matrix);
     return copy;
 }
@@ -290,7 +292,6 @@ Graph* graph_make_directed(Graph* graph, int (*f)(int, int, int*), int* meta_dat
 
     CompressedSparseRow* adjacency_matrix = directed_graph->adjacency_matrix;
     int* idx_dir_cols = adjacency_matrix->idx_cols;
-    int* edge_dir_weights = adjacency_matrix->edge_weights;
 
     // decompress csr into coordinate format
     int* idx_decompressed_und_rows = csr_decompress_row_ptrs(directed_graph->adjacency_matrix);
@@ -314,18 +315,17 @@ Graph* graph_make_directed(Graph* graph, int (*f)(int, int, int*), int* meta_dat
         idx_dir_cols[i - skipped] = target;
     }
 
-    // printf("skipped: %d, num_edges: %d\n", skipped, graph->num_edges);
-
     int num_edges = graph->num_edges - skipped;
 
     adjacency_matrix->num_nnzs = num_edges;
     directed_graph->num_edges = num_edges;
 
+    idx_decompressed_und_rows = realloc(idx_decompressed_und_rows, num_edges * sizeof(int));
     adjacency_matrix->idx_cols = realloc(adjacency_matrix->idx_cols, num_edges * sizeof(int));
     adjacency_matrix->edge_weights = realloc(adjacency_matrix->edge_weights, num_edges * sizeof(int));
 
     // parallel sort by rows then columns to prepare for the new csr
-    array_parallel_sort_3(idx_decompressed_und_rows, idx_dir_cols, edge_dir_weights, num_edges, num_edges, num_edges, true);
+    array_parallel_sort_3(idx_decompressed_und_rows, adjacency_matrix->idx_cols, adjacency_matrix->edge_weights, num_edges, num_edges, num_edges, true);
 
     // compress coordinate format into csr
     csr_compress_row_ptrs(directed_graph->adjacency_matrix, idx_decompressed_und_rows);

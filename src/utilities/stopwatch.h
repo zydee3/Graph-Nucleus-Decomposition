@@ -2,6 +2,7 @@
 #define STOPWATCH_H_INCLUDED
 
 #include <assert.h>
+#include <stdlib.h>
 #include <time.h>
 
 typedef struct Stopwatch {
