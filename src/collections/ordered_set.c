@@ -112,16 +112,16 @@ bool ordered_set_insert(OrderedSet* set, int element) {
     // If the set is full, resize it.
     if (set->size == set->capacity) {
         int new_capacity = set->capacity + set->num_resize_amount;
-        array_resize(&set->elements, set->capacity, new_capacity);
+
+        set->elements = realloc(set->elements, new_capacity * sizeof(int));
+        assert(set->elements != NULL);
+
         set->capacity = new_capacity;
     }
 
     // If the element needs to be insertted in the middle of the set,
     // shift the elements to the right.
-    if (idx_element < set->size) {
-        array_shift_out(&set->elements, set->capacity, 1, idx_element, false);
-    }
-
+    memmove(&set->elements[idx_element + 1], &set->elements[idx_element], (set->size - idx_element) * sizeof(int));
     // Insert the element.
     set->elements[idx_element] = element;
 
@@ -192,7 +192,10 @@ bool ordered_set_remove(OrderedSet* set, int element) {
     // If the set is too large, resize it.
     if (set->size < set->capacity - set->num_resize_amount) {
         int new_capacity = set->capacity - set->num_resize_amount;
-        array_resize(&set->elements, set->capacity, new_capacity);
+
+        set->elements = realloc(set->elements, new_capacity * sizeof(int));
+        assert(set->elements != NULL);
+
         set->capacity = new_capacity;
     }
 
@@ -202,7 +205,8 @@ bool ordered_set_remove(OrderedSet* set, int element) {
 void ordered_set_fit(OrderedSet* set) {
     assert(set != NULL);
 
-    array_resize(&set->elements, set->capacity, set->size);
+    set->elements = realloc(set->elements, set->size * sizeof(int));
+
     set->capacity = set->size;
 }
 

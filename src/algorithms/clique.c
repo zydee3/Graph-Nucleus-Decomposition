@@ -240,6 +240,12 @@ CliqueSet* _find_four_cliques(Graph* graph) {
         }
     }
 
+    //     printf("num_triangles: %d (diff: %d)\n", num_triangles, num_triangles - 1612010);
+    //     printf("num_squares: %d (diff: %d)\n", num_squares, num_squares - 30004668);
+
+    //     printf("expected num_triangle: 1612010\n");
+    //     printf("expected num_squares: 30004668\n");
+
     graph_delete(&directed_graph);
     free(triangle_ends);
 

@@ -74,10 +74,7 @@ static inline int* _get_directed_degrees(Graph* graph) {
         int idx_end_read = ptr_rows[idx_row + 1];
 
         for (int idx_col = idx_begin_read; idx_col < idx_end_read; idx_col++) {
-            vertex u = idx_row;
             vertex v = idx_cols[idx_col];
-
-            degrees[u]++;
             degrees[v]++;
         }
     }
@@ -287,6 +284,8 @@ Graph* graph_make_directed(Graph* graph, int (*f)(int, int, int*), int* meta_dat
     assert(graph->adjacency_matrix->is_set);
     assert(f != NULL);
 
+    assert(graph->is_directed == false);
+
     Graph* directed_graph = graph_copy(graph);
     directed_graph->is_directed = true;
 
@@ -296,36 +295,20 @@ Graph* graph_make_directed(Graph* graph, int (*f)(int, int, int*), int* meta_dat
     // decompress csr into coordinate format
     int* idx_decompressed_und_rows = csr_decompress_row_ptrs(directed_graph->adjacency_matrix);
 
-    int skipped = 0;
-
     // apply f to each row and column to obtain the new ordering
     for (int i = 0; i < graph->num_edges; i++) {
         vertex u = idx_decompressed_und_rows[i];
         vertex v = idx_dir_cols[i];
 
-        if (u >= v) {
-            skipped++;
-            continue;
-        }
-
         vertex target = f(u, v, meta_data);
         vertex source = target == u ? v : u;
 
-        idx_decompressed_und_rows[i - skipped] = source;
-        idx_dir_cols[i - skipped] = target;
+        idx_decompressed_und_rows[i] = source;
+        idx_dir_cols[i] = target;
     }
 
-    int num_edges = graph->num_edges - skipped;
-
-    adjacency_matrix->num_nnzs = num_edges;
-    directed_graph->num_edges = num_edges;
-
-    idx_decompressed_und_rows = realloc(idx_decompressed_und_rows, num_edges * sizeof(int));
-    adjacency_matrix->idx_cols = realloc(adjacency_matrix->idx_cols, num_edges * sizeof(int));
-    adjacency_matrix->edge_weights = realloc(adjacency_matrix->edge_weights, num_edges * sizeof(int));
-
     // parallel sort by rows then columns to prepare for the new csr
-    array_parallel_sort_3(idx_decompressed_und_rows, adjacency_matrix->idx_cols, adjacency_matrix->edge_weights, num_edges, num_edges, num_edges, true);
+    array_parallel_sort_2(idx_decompressed_und_rows, adjacency_matrix->idx_cols, graph->num_edges, graph->num_edges, true);
 
     // compress coordinate format into csr
     csr_compress_row_ptrs(directed_graph->adjacency_matrix, idx_decompressed_und_rows);
@@ -460,24 +443,13 @@ int graph_get_edge(Graph* graph, int idx_row, int idx_col) {
  */
 int* graph_get_degrees(Graph* graph) {
     assert(graph != NULL);
+    assert(graph->adjacency_matrix != NULL);
 
-    CompressedSparseRow* adjacency_matrix = graph->adjacency_matrix;
-    assert(adjacency_matrix != NULL);
-    assert(graph->adjacency_matrix->is_set);
-
-    int* ptr_rows = adjacency_matrix->ptr_rows;
-    assert(graph->adjacency_matrix->ptr_rows != NULL);
-
-    int* degrees = calloc(graph->num_vertices + 1, sizeof(int));
-    assert(degrees != NULL);
-
-    for (int idx_row = 0; idx_row < graph->num_vertices; idx_row++) {
-        int idx_begin_read = ptr_rows[idx_row];
-        int idx_end_read = ptr_rows[idx_row + 1];
-        degrees[idx_row] = idx_end_read - idx_begin_read;
+    if (graph->is_directed == true) {
+        return _get_directed_degrees(graph);
     }
 
-    return degrees;
+    return _get_undirected_degrees(graph);
 }
 
 OrderedSet* graph_get_neighbors(Graph* graph, int idx_vertex_u) {

@@ -35,3 +35,11 @@ int max_3(int a, int b, int c) {
         return c;
     }
 }
+
+bool cmp_min(int a, int b) {
+    return a < b;
+}
+
+bool cmp_max(int a, int b) {
+    return a > b;
+}

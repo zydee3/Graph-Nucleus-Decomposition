@@ -347,106 +347,6 @@ void test_array_binary_search_range_or_closest() {
 // Begin Manipulation Unit Tests
 
 /**
- * @brief A unit test for array_binary_search.
- *
- * This function generates a sequence of numbers from 0 to
- * NUM_ELEMS - 1 and runs a sequence of searches for existing and
- * non-existing elements.
- *
- * This generates a sequence and performing a series of shift tests on
- * the sequence to check for general performance and edge cases. The
- * tests check for the following: (1) shifting left and right without
- * resizing the array, (2) shifting left and right with resizing the
- * array. Various shift sizes are tested ranging from 1 shift to a
- * large shift.
- *
- * The test is considered passing if the array is shifted correctly
- * and the number of elements in the array is correct after each
- * shift (for when resizing is allowed).
- */
-void test_array_shift_out() {
-    bool is_passing = true;
-    int* test = array_generate_sequence(RANGE_ELEMS_S1_LOW, INC_VALUE, NUM_ELEMS);
-    int num_elements = NUM_ELEMS;
-
-    // result after shifting left 1 time at index 3
-    int answer_1[] = {1, 2, 3, 0, 4, 5, 6, 7, 8, 9};
-    num_elements = array_shift_out(&test, num_elements, -1, 3, false);
-    is_passing = is_passing && array_is_equal(test, answer_1, num_elements, NUM_ELEMS);
-
-    // result after shifting right 1 time at index 5
-    int answer_2[] = {1, 2, 3, 0, 4, 0, 5, 6, 7, 8};
-    num_elements = array_shift_out(&test, num_elements, 1, 5, false);
-    is_passing = is_passing && array_is_equal(test, answer_2, num_elements, NUM_ELEMS);
-
-    // result after shifting left 3 times at index 4
-    int answer_3[] = {0, 4, 0, 0, 0, 0, 5, 6, 7, 8};
-    num_elements = array_shift_out(&test, num_elements, -3, 4, false);
-    is_passing = is_passing && array_is_equal(test, answer_3, num_elements, NUM_ELEMS);
-
-    // result after shifting right 2 times at index 7
-    int answer_4[] = {0, 4, 0, 0, 0, 0, 5, 0, 0, 6};
-    num_elements = array_shift_out(&test, num_elements, 2, 7, false);
-    is_passing = is_passing && array_is_equal(test, answer_4, num_elements, NUM_ELEMS);
-
-    // result after shifting right 4 times at index 3 with resizing
-    int answer_5[] = {0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 6};
-    num_elements = array_shift_out(&test, num_elements, 4, 3, true);
-    is_passing = is_passing && array_is_equal(test, answer_5, num_elements, num_elements);
-
-    // // result after shifting left 4 times at index 3 with resizing
-    int answer_6[] = {0, 0, 0, 0, 0, 0, 5, 0, 0, 6};
-    num_elements = array_shift_out(&test, num_elements, -4, 3, true);
-    is_passing = is_passing && array_is_equal(test, answer_6, num_elements, num_elements);
-
-    free(test);
-    print_test_result(__FILE__, __func__, is_passing);
-}
-
-/**
- * @brief A unit test for array_shift_in.
- *
- * The function generates an ordered sequence of numbers. The function
- * then uses a for-loop to decrement the array length by 1 and then
- * performs a resize. After each resize, the function checks if the
- * previous last element is set to 0 indicating a proper delete. The
- * function repeats this test where instead of decrementing the array
- * length, the array length is incremented by 1.
- *
- * The test is considered passing if the array is resized correctly
- * after each iteration.
- */
-void test_array_resize() {
-    bool is_passing = true;
-    int* test = array_generate_sequence(RANGE_ELEMS_S1_LOW, INC_VALUE, NUM_ELEMS);
-
-    for (int curr_len = NUM_ELEMS; curr_len > 0; curr_len--) {
-        int next_len = curr_len - 1;
-        array_resize(&test, curr_len, next_len);
-
-        if (next_len == 0) {
-            is_passing = is_passing && (test == NULL);
-        } else {
-            size_t expected_usable_size = sizeof(int) * (next_len);
-            is_passing = is_passing && (malloc_usable_size(test) == expected_usable_size);
-        }
-    }
-
-    // int* test_2 = NULL;
-    // for (int curr_len = 0; curr_len < NUM_ELEMS; curr_len++) {
-    //     int next_len = curr_len + 1;
-    //     array_resize(&test_2, curr_len, next_len);
-
-    //     size_t expected_usable_size = sizeof(int) * (next_len);
-    //     is_passing = is_passing && (malloc_usable_size(test_2) == expected_usable_size);
-    // }
-
-    free(test);
-    // free(test_2);
-    print_test_result(__FILE__, __func__, is_passing);
-}
-
-/**
  * @brief A unit test for array_parallel_sort.
  *
  * The function generates two arrays, one with an ordered sequence of
@@ -475,30 +375,6 @@ void test_array_parallel_sort_2() {
     print_test_result(__FILE__, __func__, is_passing);
 }
 
-void test_array_parallel_sort_3() {
-    bool is_passing = true;
-
-    int initial_A[] = {1, 7, 2, 8, 4, 8, 5, 9};
-    int initial_B[] = {4, 1, 9, 3, 6, 4, 6, 7};
-    int initial_C[] = {1, 2, 3, 4, 5, 6, 7, 8};
-
-    int expected_A[] = {1, 2, 4, 5, 7, 8, 8, 9};
-    int expected_B[] = {4, 9, 6, 6, 1, 3, 4, 7};
-    int expected_C[] = {1, 3, 5, 7, 2, 4, 6, 8};
-
-    int len_A = sizeof(initial_A) / sizeof(int);
-    int len_B = sizeof(initial_B) / sizeof(int);
-    int len_C = sizeof(initial_C) / sizeof(int);
-
-    array_parallel_sort_3(initial_A, initial_B, initial_C, len_A, len_B, len_C, true);
-
-    is_passing = is_passing && array_is_equal(initial_A, expected_A, len_A, len_A);
-    is_passing = is_passing && array_is_equal(initial_B, expected_B, len_B, len_B);
-    is_passing = is_passing && array_is_equal(initial_C, expected_C, len_C, len_C);
-
-    print_test_result(__FILE__, __func__, is_passing);
-}
-
 // End Manipulation Unit Tests
 // Begin Entry Function
 
@@ -519,14 +395,10 @@ void test_array_util() {
     test_array_binary_search_or_closest();
     test_array_binary_search_range_or_closest();
 
-    // Maniuplation Functions
-    test_array_shift_out();
-
     // Turns out realloc can return the same block of memory and
     // malloc_usable_size will return the same value. This is why
     // the test_array_resize function is failing.
     // test_array_resize();
 
     test_array_parallel_sort_2();
-    test_array_parallel_sort_3();
 }

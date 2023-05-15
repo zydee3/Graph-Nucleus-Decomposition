@@ -25,7 +25,10 @@ void queue_enqueue(Queue* queue, int element) {
 
     if (queue->size == queue->capacity) {
         int new_capacity = queue->capacity + queue->num_resize_amount;
-        array_resize(&queue->elements, queue->capacity, new_capacity);
+
+        queue->elements = realloc(queue->elements, sizeof(int) * new_capacity);
+        assert(queue->elements != NULL);
+
         queue->capacity = new_capacity;
     }
 
@@ -44,7 +47,10 @@ int queue_dequeue(Queue* queue) {
 
     if (queue->size < queue->capacity - queue->num_resize_amount) {
         int new_capacity = queue->capacity - queue->num_resize_amount;
-        array_resize(&queue->elements, queue->capacity, new_capacity);
+
+        queue->elements = realloc(queue->elements, sizeof(int) * new_capacity);
+        assert(queue->elements != NULL);
+
         queue->capacity = new_capacity;
     }
 

@@ -79,30 +79,22 @@ CompressedSparseRow* csr_new_from_file(FILE* file, int num_rows, int num_cols, i
     char* buffer = calloc(len_buffer, sizeof(char));
 
     int idx_prev_row = -1;
-    int idx_row, idx_col, val_edge_weight;
+    int idx_row, idx_col;
 
-    for (int idx_nnz = 0; idx_nnz <= vertices->num_nnzs; idx_nnz++) {
-        if (fgets(buffer, len_buffer, file) == NULL) {
-            printf("A: Breaking: nnz=%d\n", idx_nnz);
-            break;
-        }
-
-        if (sscanf(buffer, "%d %d %d\n", &idx_row, &idx_col, &val_edge_weight) != 3) {
-            printf("B: Breaking: nnz=%d\n", idx_nnz);
-            break;
-        }
+    for (int idx_nnz = 0; idx_nnz < vertices->num_nnzs; idx_nnz++) {
+        assert(fgets(buffer, len_buffer, file) != NULL);
+        assert(sscanf(buffer, "%d %d\n", &idx_row, &idx_col) == 2);
 
         assert(idx_row >= 0);
         assert(idx_col >= 0);
         assert(idx_row < vertices->num_rows);
         assert(idx_col < vertices->num_cols);
-        assert(val_edge_weight >= 0);
 
         // prevent vertices with self-loops
         assert(idx_row != idx_col);
 
         // the edge list should be ordered by u then v for an edge u,v
-        // assert(idx_prev_row <= idx_row);
+        assert(idx_prev_row <= idx_row);
 
         if (idx_prev_row < idx_row) {
             // Set the row pointer from u' to u to the current index
@@ -117,16 +109,17 @@ CompressedSparseRow* csr_new_from_file(FILE* file, int num_rows, int num_cols, i
         }
 
         vertices->idx_cols[idx_nnz] = idx_col;
-        vertices->edge_weights[idx_nnz] = val_edge_weight;
+        vertices->edge_weights[idx_nnz] = 1;
     }
 
-    for (int i = idx_prev_row + 1; i <= vertices->num_rows; i++) {
+    // Set the row pointers from the last u to the number of rows to
+    // the number most recent value for the non-zero elements, also
+    // indicating those rows to be empty.
+    for (int i = idx_prev_row + 1; i < vertices->num_rows; i++) {
         vertices->ptr_rows[i] = vertices->num_nnzs;
     }
 
     free(buffer);
-
-    printf("num edges: %d\n", vertices->num_nnzs);
 
     vertices->is_set = true;
     return vertices;

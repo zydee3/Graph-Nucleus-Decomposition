@@ -293,85 +293,18 @@ static inline int _shift_out_right(int** ptr_array, int len_array, int len_shift
     return len_array;
 }
 
-/**
- * @brief Shrinks the array to the new length of new_len_array.
- *
- * The lost memory is set to 0 with memset.
- *
- * @param ptr_array The array to shrink.
- * @param len_array The current length of the array.
- * @param new_len_array The new length of the array.
- */
-static inline void _shrink(int** ptr_array, int len_array, int new_len_array) {
-    assert(len_array > new_len_array);
-
-    if (new_len_array == 0) {
-        free(*ptr_array);
-        *ptr_array = NULL;
-        return;
-    }
-
-    int cur_capacty = len_array;
-    int new_capacity = new_len_array;
-    int len_shrink = cur_capacty - new_capacity;
-
-    memset(&(*ptr_array)[new_capacity], 0, sizeof(int) * len_shrink);
-
-    *ptr_array = realloc(*ptr_array, sizeof(int) * new_capacity);
-
-    assert(*ptr_array != NULL);
-}
-
-/**
- * @brief Expands the array to the new length of new_len_array.
- *
- * The newly allocated memory is set to 0 with memset.
- *
- * @param array The array to expand.
- * @param len_array The current length of the array.
- * @param new_len_array The new length of the array.
- */
-static inline void _expand(int** array, int len_array, int new_len_array) {
-    assert(new_len_array > len_array);
-
-    if (*array == NULL || len_array == 0) {
-        *array = malloc(sizeof(int) * new_len_array);
-        assert(*array != NULL);
-        memset(*array, 0, sizeof(int) * new_len_array);
-        return;
-    }
-
-    int cur_capacty = len_array;
-    int new_capacity = new_len_array;
-    int len_expand = new_capacity - cur_capacty;
-
-    *array = realloc(*array, sizeof(int) * new_capacity);
-    assert(*array != NULL);
-
-    memset(&(*array)[cur_capacty], 0, sizeof(int) * len_expand);
-}
-
-/**
- * @brief Sorts the param array_1 in parallel with param array_2 in
- * ascending order.
- *
- * @param array_1 The array to sort relative to array_2.
- * @param array_2 The array to sort.
- * @param idx_lower_bound The lower bound of the array to sort.
- * @param idx_upper_bound The upper bound of the array to sort.
- */
-static inline void _parallel_sort_ascending_2(int* array_1, int* array_2, int idx_lower_bound, int idx_upper_bound) {
+static inline void _parallel_sort(int* array_1, int* array_2, int idx_lower_bound, int idx_upper_bound, bool (*cmp)(int, int)) {
     int idx_curr_lower_bound = idx_lower_bound;
     int idx_curr_upper_bound = idx_upper_bound;
     int idx_curr_middle = (idx_curr_lower_bound + idx_curr_upper_bound) / 2;
     int pivot = array_2[idx_curr_middle];
 
     while (idx_curr_lower_bound <= idx_curr_upper_bound) {
-        while (array_2[idx_curr_lower_bound] < pivot) {
+        while (cmp(array_2[idx_curr_lower_bound], pivot) == true) {
             idx_curr_lower_bound++;
         }
 
-        while (array_2[idx_curr_upper_bound] > pivot) {
+        while (array_2[idx_curr_upper_bound] != pivot && cmp(array_2[idx_curr_upper_bound], pivot) == false) {
             idx_curr_upper_bound--;
         }
 
@@ -391,183 +324,11 @@ static inline void _parallel_sort_ascending_2(int* array_1, int* array_2, int id
     }
 
     if (idx_lower_bound < idx_curr_upper_bound) {
-        _parallel_sort_ascending_2(array_1, array_2, idx_lower_bound, idx_curr_upper_bound);
+        _parallel_sort(array_1, array_2, idx_lower_bound, idx_curr_upper_bound, cmp);
     }
 
     if (idx_curr_lower_bound < idx_upper_bound) {
-        _parallel_sort_ascending_2(array_1, array_2, idx_curr_lower_bound, idx_upper_bound);
-    }
-}
-
-/**
- * @brief Sorts the param array_1 in parallel with param array_2 in
- * descending order.
- *
- * @param array_1 The array to sort relative to array_2.
- * @param array_2 The array to sort.
- * @param idx_lower_bound The lower bound of the array to sort.
- * @param idx_upper_bound The upper bound of the array to sort.
- */
-static inline void _parallel_sort_descending_2(int* array_1, int* array_2, int idx_lower_bound, int idx_upper_bound) {
-    int idx_curr_lower_bound = idx_lower_bound;
-    int idx_curr_upper_bound = idx_upper_bound;
-    int idx_curr_middle = (idx_curr_lower_bound + idx_curr_upper_bound) / 2;
-    int pivot = array_2[idx_curr_middle];
-
-    while (idx_curr_lower_bound <= idx_curr_upper_bound) {
-        while (array_2[idx_curr_lower_bound] > pivot) {
-            idx_curr_lower_bound++;
-        }
-
-        while (array_2[idx_curr_upper_bound] < pivot) {
-            idx_curr_upper_bound--;
-        }
-
-        if (idx_curr_lower_bound <= idx_curr_upper_bound) {
-            int temp = array_1[idx_curr_lower_bound];
-
-            array_1[idx_curr_lower_bound] = array_1[idx_curr_upper_bound];
-            array_1[idx_curr_upper_bound] = temp;
-
-            temp = array_2[idx_curr_lower_bound];
-            array_2[idx_curr_lower_bound] = array_2[idx_curr_upper_bound];
-            array_2[idx_curr_upper_bound] = temp;
-
-            idx_curr_lower_bound++;
-            idx_curr_upper_bound--;
-        }
-    }
-
-    if (idx_lower_bound < idx_curr_upper_bound) {
-        _parallel_sort_descending_2(array_1, array_2, idx_lower_bound, idx_curr_upper_bound);
-    }
-
-    if (idx_curr_lower_bound < idx_upper_bound) {
-        _parallel_sort_descending_2(array_1, array_2, idx_curr_lower_bound, idx_upper_bound);
-    }
-}
-
-static inline void _parallel_sort_ascending_3(int* array_1, int* array_2, int* array_3, int idx_lower_bound, int idx_upper_bound) {
-    assert(idx_lower_bound >= 0);
-    assert(idx_upper_bound >= 0);
-    assert(idx_lower_bound <= idx_upper_bound);
-    assert(array_1 != NULL);
-    assert(array_2 != NULL);
-
-    int idx_curr_lower_bound = idx_lower_bound;
-    int idx_curr_upper_bound = idx_upper_bound;
-    int idx_curr_middle = (idx_curr_lower_bound + idx_curr_upper_bound) / 2;
-    int pivot = array_1[idx_curr_middle];
-
-    while (idx_curr_lower_bound <= idx_curr_upper_bound) {
-        while (array_1[idx_curr_lower_bound] < pivot) {
-            idx_curr_lower_bound++;
-        }
-
-        while (array_1[idx_curr_upper_bound] > pivot) {
-            idx_curr_upper_bound--;
-        }
-
-        if (idx_curr_lower_bound <= idx_curr_upper_bound) {
-            int temp = array_1[idx_curr_lower_bound];
-            array_1[idx_curr_lower_bound] = array_1[idx_curr_upper_bound];
-            array_1[idx_curr_upper_bound] = temp;
-
-            temp = array_2[idx_curr_lower_bound];
-            array_2[idx_curr_lower_bound] = array_2[idx_curr_upper_bound];
-            array_2[idx_curr_upper_bound] = temp;
-
-            temp = array_3[idx_curr_lower_bound];
-            array_3[idx_curr_lower_bound] = array_3[idx_curr_upper_bound];
-            array_3[idx_curr_upper_bound] = temp;
-
-            idx_curr_lower_bound++;
-            idx_curr_upper_bound--;
-        }
-    }
-
-    if (idx_lower_bound < idx_curr_upper_bound) {
-        _parallel_sort_ascending_3(array_1, array_2, array_3, idx_lower_bound, idx_curr_upper_bound);
-    }
-
-    if (idx_curr_lower_bound < idx_upper_bound) {
-        _parallel_sort_ascending_3(array_1, array_2, array_3, idx_curr_lower_bound, idx_upper_bound);
-    }
-}
-
-static inline void _parallel_sort_descending_3(int* array_1, int* array_2, int* array_3, int idx_lower_bound, int idx_upper_bound) {
-    int idx_curr_lower_bound = idx_lower_bound;
-    int idx_curr_upper_bound = idx_upper_bound;
-    int idx_curr_middle = (idx_curr_lower_bound + idx_curr_upper_bound) / 2;
-    int pivot = array_1[idx_curr_middle];
-
-    while (idx_curr_lower_bound <= idx_curr_upper_bound) {
-        while (array_1[idx_curr_lower_bound] > pivot) {
-            idx_curr_lower_bound++;
-        }
-
-        while (array_1[idx_curr_upper_bound] < pivot) {
-            idx_curr_upper_bound--;
-        }
-
-        if (idx_curr_lower_bound <= idx_curr_upper_bound) {
-            int temp = array_1[idx_curr_lower_bound];
-            array_1[idx_curr_lower_bound] = array_1[idx_curr_upper_bound];
-            array_1[idx_curr_upper_bound] = temp;
-
-            temp = array_2[idx_curr_lower_bound];
-            array_2[idx_curr_lower_bound] = array_2[idx_curr_upper_bound];
-            array_2[idx_curr_upper_bound] = temp;
-
-            temp = array_3[idx_curr_lower_bound];
-            array_3[idx_curr_lower_bound] = array_3[idx_curr_upper_bound];
-            array_3[idx_curr_upper_bound] = temp;
-
-            idx_curr_lower_bound++;
-            idx_curr_upper_bound--;
-        }
-    }
-
-    if (idx_lower_bound < idx_curr_upper_bound) {
-        _parallel_sort_descending_3(array_1, array_2, array_3, idx_lower_bound, idx_curr_upper_bound);
-    }
-
-    if (idx_curr_lower_bound < idx_upper_bound) {
-        _parallel_sort_descending_3(array_1, array_2, array_3, idx_curr_lower_bound, idx_upper_bound);
-    }
-}
-
-void _parallel_sort_c_based_on_b_maintain_a_ascending(int* array_a, int* array_b, int* array_c, int len) {
-    int idx_lower_bound = 0;
-
-    for (int i = 1; i < len; ++i) {
-        if (array_a[i] != array_a[idx_lower_bound]) {
-            if (i - idx_lower_bound > 1) {
-                _parallel_sort_ascending_2(array_b + idx_lower_bound, array_c + idx_lower_bound, 0, i - idx_lower_bound - 1);
-            }
-            idx_lower_bound = i;
-        }
-    }
-
-    if (len - idx_lower_bound > 1) {
-        _parallel_sort_ascending_2(array_b + idx_lower_bound, array_c + idx_lower_bound, 0, len - idx_lower_bound - 1);
-    }
-}
-
-void _parallel_sort_c_based_on_b_maintain_a_descending(int* array_a, int* array_b, int* array_c, int len) {
-    int idx_lower_bound = 0;
-
-    for (int i = 1; i < len; ++i) {
-        if (array_a[i] != array_a[idx_lower_bound]) {
-            if (i - idx_lower_bound > 1) {
-                _parallel_sort_descending_2(array_b + idx_lower_bound, array_c + idx_lower_bound, 0, i - idx_lower_bound - 1);
-            }
-            idx_lower_bound = i;
-        }
-    }
-
-    if (len - idx_lower_bound > 1) {
-        _parallel_sort_descending_2(array_b + idx_lower_bound, array_c + idx_lower_bound, 0, len - idx_lower_bound - 1);
+        _parallel_sort(array_1, array_2, idx_curr_lower_bound, idx_upper_bound, cmp);
     }
 }
 
@@ -661,77 +422,6 @@ int array_binary_search_range_or_closest(int* array, int len_array, int idx_begi
 }
 
 /**
- * @brief Shifts the elements in an array to the left or right
- * outwards by a specified amount, resizing if necessary and if
- * do_resize is true.
- *
- * When the shift amount is negative, indicating a leftwards shift,
- * the elements from the start of the array to param pos_begin_read
- * inclusive are shifted outwards left param len_shift amount of
- * positions. Similarly, when the shift amount is positive, indicating
- * a rightwards shift, the elements from param pos_begin_read to the
- * end of the array inclusive are shifted outwards right param
- * len_shift amount of positions.
- *
- * When shifting left, len_shift number of elements are shifted
- * outside the boundary of the array. If do_resize is true, the array
- * is resized to accomodate for the elements shifted. Essentially, the
- * first len_shift number of elements are removed from the array when
- * do_resize is true.
- *
- * When shifting right, len_shift number of elements are shifted
- * outside the boundary of the array. If do_resize is true, the array
- * is resized to accomodate for the elements shifted. Essentially,
- * len_shift number of zeros are added between pos_begin_read-1 and
- * pos_begin_read. The array capacity is increased by len_shift.
- *
- * In either case, if do_resize is false, the array is not resized
- * and the elements shifted outside the boundary of the array are
- * simply discarded.
- *
- * @param ptr_array The pointer to the array to shift.
- * @param len_array The length of the array.
- * @param len_shift The amount to shift the array.
- * @param idx_begin_read The index to begin reading from.
- * @param can_resize_array Whether or not to resize the array.
- * @return int The new length of the array.
- */
-int array_shift_out(int** ptr_array, int len_array, int len_shift, int idx_begin_read, bool can_resize_array) {
-    if (len_shift == 0) {
-        return len_array;
-    }
-
-    if (len_shift < 0) {
-        return _shift_out_left(ptr_array, len_array, -1 * len_shift, idx_begin_read, can_resize_array);
-    } else {
-        return _shift_out_right(ptr_array, len_array, len_shift, idx_begin_read, can_resize_array);
-    }
-}
-
-/**
- * @brief Swaps two elements in an array.
- *
- * @param array The array to swap the elements in.
- * @param len_array The length of the array.
- * @param index_1 The position of the first element to swap.
- * @param index_2 The position of the second element to swap.
- */
-void array_swap(int* array, int len_array, int index_1, int index_2) {
-    assert(array != NULL);
-    assert(len_array >= 0);
-    assert(index_1 >= 0 && index_1 < len_array);
-    assert(index_2 >= 0 && index_2 < len_array);
-
-    if (index_1 == index_2) {
-        return;
-    }
-
-    int temp = array[index_1];
-    array[index_1] = array[index_2];
-    array[index_2] = temp;
-}
-
-/**
  * @brief Reverses the elements in an array between the specified
  * indices idx_begin_read and idx_end_read (inclusive).
  *
@@ -766,9 +456,8 @@ void array_reverse(int* array, int array_size, int idx_begin_read, int idx_end_r
  * A copy of the param array is made if use_original_array is false
  * using calloc and memcpy. The array is then shuffeled using the
  * Fisher-Yates algorithm. The algorithm is implemented using a loop
- * that iterates backwards over the array. The loop calls the
- * array_swap() function to swap each element with a random element
- * in the array. Finally, the shuffled array is returned.
+ * that iterates backwards over the array. The shuffled array is
+ * returned.
  *
  * @note The Fisher-Yates algorithm produces a non-identity
  * permutation with high probability. The probability of obtaining the
@@ -808,36 +497,6 @@ int* array_shuffle(int* array, int len_array, bool use_original_array) {
 }
 
 /**
- * @brief Resizes an array to the new size param len_new_array.
- *
- * If the new size is smaller than the current size, the array is
- * shrunk. If the new size is larger than the current size, the array
- * is expanded. If the new size is the same as the current size, the
- * array is not resized.
- *
- * If the array is shrunk, the elements between the new size and the
- * old size are set to 0 using memset and discarded. If the array is
- * expanded, the new elements are initialized to 0 using memset.
- *
- * @param ptr_array The pointer to the array to resize.
- * @param len_array The length of the array.
- * @param len_new_array The new length of the array.
- */
-void array_resize(int** ptr_array, int len_array, int len_new_array) {
-    assert(ptr_array != NULL);
-    assert(*ptr_array != NULL);
-    assert(len_array >= 0);
-    assert(len_new_array >= 0);
-
-    int len_change = len_new_array - len_array;
-    if (len_change < 0) {
-        _shrink(ptr_array, len_array, len_new_array);
-    } else if (len_change > 0) {
-        _expand(ptr_array, len_array, len_new_array);
-    }
-}
-
-/**
  * @brief Sorts param array_1 based on the sorting of param array_2.
  * Param array_2 is sorted in ascending order if param is_ascending is
  * true, otherwise param array_2 is sorted in descending order.
@@ -861,53 +520,9 @@ void array_parallel_sort_2(int* array_1, int* array_2, int len_array_1, int len_
     assert(len_array_1 >= 0);
 
     if (is_ascending) {
-        _parallel_sort_ascending_2(array_1, array_2, 0, len_array_1 - 1);
+        _parallel_sort(array_1, array_2, 0, len_array_1 - 1, cmp_min);
     } else {
-        _parallel_sort_descending_2(array_1, array_2, 0, len_array_1 - 1);
-    }
-}
-
-/**
- * @brief Sorts param array_1, param array_2 and param array_3 based
- * on the sorting of param array_2.
- *
- * @attention This function temporarily does not sort array_3.
- *
- * @param array_1
- * @param array_2
- * @param array_3
- * @param len_array_1
- * @param len_array_2
- * @param len_array_3
- * @param is_ascending
- */
-void array_parallel_sort_3(int* array_1, int* array_2, int* array_3, int len_array_1, int len_array_2, int len_array_3, bool is_ascending) {
-    assert(array_1 != NULL);
-    assert(array_2 != NULL);
-    assert(array_3 != NULL);
-    assert(len_array_1 == len_array_2);
-    assert(len_array_2 == len_array_3);
-    assert(len_array_1 >= 0);
-
-    // save the function pointer to the correct comparison function
-    int (*cmp)(const void*, const void*);
-
-    if (is_ascending) {
-        _parallel_sort_ascending_3(array_1, array_2, array_3, 0, len_array_1 - 1);
-        cmp = cmp_ints_asc;
-    } else {
-        _parallel_sort_descending_3(array_1, array_2, array_3, 0, len_array_1 - 1);
-        cmp = cmp_ints_dsc;
-    }
-
-    int idx_prev = 0;
-
-    for (int idx_curr = 0; idx_curr < len_array_1; idx_curr++) {
-        if (array_1[idx_curr] != array_1[idx_prev]) {
-            int len_sort = idx_curr - idx_prev;
-            qsort(&(array_2[idx_prev]), len_sort, sizeof(int), cmp);
-            idx_prev = idx_curr;
-        }
+        _parallel_sort(array_1, array_2, 0, len_array_1 - 1, cmp_max);
     }
 }
 
