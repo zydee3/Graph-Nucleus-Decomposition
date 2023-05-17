@@ -25,12 +25,12 @@ typedef struct CompressedSparseRow {
 
 // Create and Delete Functions
 CompressedSparseRow *csr_new(int num_rows, int num_cols, int num_nnzs);
-CompressedSparseRow *csr_new_from_file(FILE *file, int num_rows, int num_cols, int num_nnzs);
+CompressedSparseRow *csr_new_from_file(FILE *file, int num_rows, int num_cols, int num_nnzs, bool is_directed);
 CompressedSparseRow *csr_copy(CompressedSparseRow *csr);
 void csr_delete(CompressedSparseRow **crs);
 
 // Manipulation Functions
-int *csr_decompress_row_ptrs(CompressedSparseRow *csr);
+int *csr_get_coord_rows(CompressedSparseRow *csr);
 void csr_compress_row_ptrs(CompressedSparseRow *csr, int *idx_decompressed_row_ptrs);
 CompressedSparseRow *csr_reduce(CompressedSparseRow *csr, int num_rows, int num_cols, int num_nnz, bool *removed_vertices);
 

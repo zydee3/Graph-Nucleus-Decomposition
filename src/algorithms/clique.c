@@ -1,5 +1,8 @@
 #include "clique.h"
 
+// Begin Clique Callback Functions
+
+// End Clique Callback Functions
 // Begin Helper Functions
 
 /**
@@ -23,84 +26,25 @@ int _compare_degrees(vertex u, vertex v, int* degrees) {
 }
 
 int _compare_vertex_id(vertex u, vertex v, int* _unused) {
+    // This param is necessary to match the expected function
+    // signature for the graph_make_directed function, but it is
+    // causing an unused variable warning. This assertion is here to
+    // silence the warning :)
+    assert(_unused == NULL || _unused != NULL);
     return max(u, v);
 }
 
 // End Helper Functions
 // Begin Specialized Clique Functions (k=1,2,3)
 
-CliqueSet* _find_one_cliques(Graph* graph) {
-    CliqueSet* vertices = clique_set_new(1, graph->num_vertices);
-    clique* elements = vertices->cliques;
-
-    for (vertex i = 0; i < graph->num_vertices; i++) {
-        clique c = calloc(1, sizeof(int));
-        c[0] = i;
-        elements[i] = c;
-    }
-
-    return vertices;
-}
-
-/**
- * @brief This function returns the set of all 2-cliques in the graph.
- * This is synonymous to finding all edges in the graph.
- *
- * This function
- *
- * @param graph
- * @return CliqueSet*
- */
-CliqueSet* _find_two_cliques(Graph* graph) {
-    int num_edges = graph->adjacency_matrix->num_nnzs;
-    CliqueSet* edges = clique_set_new(2, num_edges);
-
-    clique* elements = edges->cliques;
-    int idx_elements = 0;
-
-    int* ptr_rows = graph->adjacency_matrix->ptr_rows;
-    int* idx_cols = graph->adjacency_matrix->idx_cols;
-
-    for (int row_idx = 0; row_idx < graph->num_vertices; row_idx++) {
-        int row_begin_read = ptr_rows[row_idx];
-        int row_end_read = ptr_rows[row_idx + 1];
-
-        for (int idx_nnz = row_begin_read; idx_nnz < row_end_read; idx_nnz++) {
-            int col_idx = idx_cols[idx_nnz];
-
-            if (graph->is_directed == false && col_idx < row_idx) {
-                continue;
-            }
-
-            edge edge = calloc(2, sizeof(int));
-            if (row_idx < col_idx) {
-                edge[0] = row_idx;
-                edge[1] = col_idx;
-            } else {
-                edge[0] = col_idx;
-                edge[1] = row_idx;
-            }
-
-            elements[idx_elements++] = edge;
-        }
-    }
-
-    return edges;
-}
-
-CliqueSet* _find_three_cliques(Graph* graph) {
+void enumerate_three_cliques(Graph* graph, void* collection, void (*record)(void*, vertex, vertex, vertex)) {
     assert(graph != NULL);
     assert(graph->is_directed == false);
     assert(graph->adjacency_matrix != NULL);
     assert(graph->adjacency_matrix->is_set);
 
-    // Triangle results list
-    int clique_size = 3;
-    int resize_value = 5;
-    CliqueSet* triangles = clique_set_new(clique_size, resize_value);
-
     // Generate a degree oriented graph
-    int* undirected_degrees = graph_get_degrees(graph);
+    int* undirected_degrees = graph_get_out_degrees(graph);
     Graph* directed_graph = graph_make_directed(graph, _compare_degrees, undirected_degrees);
 
     // Store these variables for easy access
@@ -120,12 +64,7 @@ CliqueSet* _find_three_cliques(Graph* graph) {
                 vertex w = idx_cols[idx_w_nnz];
 
                 if (graph_get_edge(graph, u, w) > 0) {
-                    int* triangle = calloc(3, sizeof(int));
-                    triangle[0] = u;
-                    triangle[2] = v;
-                    triangle[1] = w;
-
-                    clique_set_insert(triangles, triangle);
+                    record(collection, u, v, w);
                 }
             }
 
@@ -133,12 +72,7 @@ CliqueSet* _find_three_cliques(Graph* graph) {
                 vertex w = idx_cols[idx_w_nnz];
 
                 if (graph_get_edge(graph, u, w) > 0) {
-                    int* triangle = calloc(3, sizeof(int));
-                    triangle[0] = u;
-                    triangle[2] = v;
-                    triangle[1] = w;
-
-                    clique_set_insert(triangles, triangle);
+                    record(collection, u, v, w);
                 }
             }
         }
@@ -146,24 +80,18 @@ CliqueSet* _find_three_cliques(Graph* graph) {
 
     free(undirected_degrees);
     graph_delete(&directed_graph);
-
-    return triangles;
 }
 
-CliqueSet* _find_four_cliques(Graph* graph) {
+void enumerate_four_cliques(Graph* graph, void* collection, void (*record)(void*, vertex, vertex, vertex, vertex)) {
     assert(graph != NULL);
     assert(graph->is_directed == false);
     assert(graph->adjacency_matrix != NULL);
     assert(graph->adjacency_matrix->is_set);
 
-    // 4-clique results list
-    int clique_size = 4;
-    int resize_value = 5;
-    CliqueSet* four_cliques = clique_set_new(clique_size, resize_value);
-
     // Generate a vertex id oriented graph
     Graph* directed_graph = graph_make_directed(graph, _compare_vertex_id, NULL);
-    int* degrees = graph_get_degrees(directed_graph);
+
+    int* degrees = graph_get_in_degrees(directed_graph);
 
     // Store the triangles found in the graph
     vertex* triangle_ends = calloc(graph->num_vertices + 1, sizeof(vertex));
@@ -173,11 +101,8 @@ CliqueSet* _find_four_cliques(Graph* graph) {
     int* ptr_rows = adjacency_matrix->ptr_rows;
     int* idx_cols = adjacency_matrix->idx_cols;
 
-    int num_triangles = 0;
-    int num_squares = 0;
-
     // Loop over all vertices
-    for (vertex u = 0; u < graph->num_vertices; u++) {
+    for (vertex u = 0; u < directed_graph->num_vertices; u++) {
         int idx_u_begin_read = ptr_rows[u];
         int idx_u_end_read = ptr_rows[u + 1];
 
@@ -196,7 +121,7 @@ CliqueSet* _find_four_cliques(Graph* graph) {
                 // since there is an edge between u, v1 and u, v2, this means there is a triangle
                 // formed by u, v1, and v2
                 if (graph_get_edge(graph, v1, v2) > 0) {
-                    num_triangles++;
+                    record(collection, u, v1, v2, -1);
                     triangle_ends[count] = v2;
                     count++;
                 }
@@ -214,15 +139,13 @@ CliqueSet* _find_four_cliques(Graph* graph) {
                     for (int idx_ref_nnz_ahead = search_lower_bound; idx_ref_nnz_ahead < count; idx_ref_nnz_ahead++) {
                         vertex v3 = triangle_ends[idx_ref_nnz_ahead];
                         if (graph_get_edge(graph, v2, v3) > 0) {
-                            num_squares++;
+                            record(collection, u, v1, v2, v3);
                         }
                     }
                 } else {
-                    int idx_v2_begin_read = ptr_rows[v2];
-                    int idx_v2_end_read = ptr_rows[v2 + 1];
-
-                    for (int idx_v2_nnz = idx_v2_begin_read; idx_v2_nnz < idx_v2_end_read; idx_v2_nnz++) {
+                    for (int idx_v2_nnz = ptr_rows[v2]; idx_v2_nnz < ptr_rows[v2 + 1]; idx_v2_nnz++) {
                         vertex v3 = idx_cols[idx_v2_nnz];
+
                         if (search_lower_bound > count - 1) {
                             break;
                         }
@@ -232,7 +155,7 @@ CliqueSet* _find_four_cliques(Graph* graph) {
                         }
 
                         if (array_binary_search_range(triangle_ends, count, search_lower_bound, count - 1, v3) >= 0) {
-                            num_squares++;
+                            record(collection, u, v1, v2, v3);
                         }
                     }
                 }
@@ -240,16 +163,8 @@ CliqueSet* _find_four_cliques(Graph* graph) {
         }
     }
 
-    //     printf("num_triangles: %d (diff: %d)\n", num_triangles, num_triangles - 1612010);
-    //     printf("num_squares: %d (diff: %d)\n", num_squares, num_squares - 30004668);
-
-    //     printf("expected num_triangle: 1612010\n");
-    //     printf("expected num_squares: 30004668\n");
-
     graph_delete(&directed_graph);
     free(triangle_ends);
-
-    return four_cliques;
 }
 
 // End Specialized Clique Functions (k=1,2,3,4)
@@ -308,24 +223,13 @@ void _find_neighbors(Graph* graph, int target_k, int current_k, int current_vert
  * @return CliqueSet* Clique set containing an nxk 2D array of
  * cliques, where n is the number of k-cliques found.
  */
-CliqueSet* find_k_cliques(Graph* graph, int k) {
+CliqueSet* enumerate_k_cliques(Graph* graph, int k) {
     assert(graph != NULL);
     assert(graph->is_directed == false);
     assert(graph->adjacency_matrix != NULL);
     assert(graph->adjacency_matrix->is_set);
 
-    switch (k) {
-        case 1:
-            return _find_one_cliques(graph);
-        case 2:
-            return _find_two_cliques(graph);
-        case 3:
-            return _find_three_cliques(graph);
-        case 4:
-            return _find_four_cliques(graph);
-        default:
-            break;
-    }
+    assert(k > 4);
 
     // Use chiba nishizeki to find all k-cliques when k >= 4.
     // Create the resulting set of k-cliques

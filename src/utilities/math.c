@@ -43,3 +43,11 @@ bool cmp_min(int a, int b) {
 bool cmp_max(int a, int b) {
     return a > b;
 }
+
+int cmp_qsort_min(const void* a, const void* b) {
+    return *(int*)a - *(int*)b;
+}
+
+int cmp_qsort_max(const void* a, const void* b) {
+    return *(int*)b - *(int*)a;
+}

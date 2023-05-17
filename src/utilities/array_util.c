@@ -99,8 +99,14 @@ static inline int _binary_search(int* array, int len_array, int idx_lower_bound,
         return should_return_closest ? 0 : -1;
     }
 
+    if (idx_upper_bound >= len_array) {
+        // printf("idx_upper_bound: %d\n", idx_upper_bound);
+        // printf("len_array: %d\n", len_array);
+        // printf("target: %d\n", val_target);
+        return -1;
+    }
+
     assert(idx_upper_bound < len_array);
-    // assert(idx_lower_bound <= idx_upper_bound);
 
     while (idx_lower_bound <= idx_upper_bound) {
         int mid_idx = (idx_lower_bound + idx_upper_bound) / 2;
@@ -297,14 +303,14 @@ static inline void _parallel_sort(int* array_1, int* array_2, int idx_lower_boun
     int idx_curr_lower_bound = idx_lower_bound;
     int idx_curr_upper_bound = idx_upper_bound;
     int idx_curr_middle = (idx_curr_lower_bound + idx_curr_upper_bound) / 2;
-    int pivot = array_2[idx_curr_middle];
+    int pivot = array_1[idx_curr_middle];  // change from array_2 to array_1
 
     while (idx_curr_lower_bound <= idx_curr_upper_bound) {
-        while (cmp(array_2[idx_curr_lower_bound], pivot) == true) {
+        while (cmp(array_1[idx_curr_lower_bound], pivot) == true) {  // change from array_2 to array_1
             idx_curr_lower_bound++;
         }
 
-        while (array_2[idx_curr_upper_bound] != pivot && cmp(array_2[idx_curr_upper_bound], pivot) == false) {
+        while (array_1[idx_curr_upper_bound] != pivot && cmp(array_1[idx_curr_upper_bound], pivot) == false) {  // change from array_2 to array_1
             idx_curr_upper_bound--;
         }
 
@@ -314,9 +320,9 @@ static inline void _parallel_sort(int* array_1, int* array_2, int idx_lower_boun
             array_1[idx_curr_lower_bound] = array_1[idx_curr_upper_bound];
             array_1[idx_curr_upper_bound] = temp;
 
-            temp = array_2[idx_curr_lower_bound];
-            array_2[idx_curr_lower_bound] = array_2[idx_curr_upper_bound];
-            array_2[idx_curr_upper_bound] = temp;
+            temp = array_2[idx_curr_lower_bound];                           // change from array_1 to array_2
+            array_2[idx_curr_lower_bound] = array_2[idx_curr_upper_bound];  // change from array_1 to array_2
+            array_2[idx_curr_upper_bound] = temp;                           // change from array_1 to array_2
 
             idx_curr_lower_bound++;
             idx_curr_upper_bound--;
@@ -523,6 +529,21 @@ void array_parallel_sort_2(int* array_1, int* array_2, int len_array_1, int len_
         _parallel_sort(array_1, array_2, 0, len_array_1 - 1, cmp_min);
     } else {
         _parallel_sort(array_1, array_2, 0, len_array_1 - 1, cmp_max);
+    }
+
+    for (int i = 0; i < len_array_1; i++) {
+        int lower_bound = i;
+        int upper_bound = i;
+
+        for (int j = i + 1; j < len_array_1; j++) {
+            if (array_1[j] != array_1[i]) {
+                upper_bound = j;
+                i = j - 1;
+                break;
+            }
+        }
+
+        qsort(&array_2[lower_bound], upper_bound - lower_bound, sizeof(int), cmp_qsort_min);
     }
 }
 

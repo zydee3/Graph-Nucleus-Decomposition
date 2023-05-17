@@ -28,16 +28,16 @@ typedef struct Graph {
 
 // Create and Delete Functions
 Graph* graph_new(int num_vertices, int num_edges, bool is_directed);
-Graph* graph_new_from_path(const char* file_path);
+Graph* graph_new_from_file(const char* file_path);
 void graph_delete(Graph** graph);
 
 // Manipulator Functions
 Graph* graph_make_directed(Graph* graph, int (*f)(int, int, int*), int* meta_data);
-Graph* graph_reduce(Graph* graph, bool* removed_vertices);
 
 // Getter Functions
 int graph_get_edge(Graph* graph, int row_idx, int col_idx);
-int* graph_get_degrees(Graph* graph);
+int* graph_get_out_degrees(Graph* graph);
+int* graph_get_in_degrees(Graph* graph);
 OrderedSet* graph_get_neighbors(Graph* graph, int idx_vertex_u);
 
 // Utility Functions

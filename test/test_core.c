@@ -1,20 +1,21 @@
 #include "test_core.h"
 
 void test_core() {
-    Graph* undirected_graph = graph_new_from_path("data/input/sample");
-    Graph* k3_core = compute_k_core(undirected_graph, 3);
+    Graph* undirected_graph = graph_new_from_file("data/input/sample");
 
-    int expected_row_ptrs[] = {0, 3, 8, 11, 15, 21, 28, 31, 36, 39, 43, 46};
-    int expected_col_idxs[] = {1, 3, 4, 0, 2, 4, 5, 9, 1, 5, 9, 0, 4, 6, 7, 0, 1, 3, 5, 6, 7, 1, 2, 4, 7, 8, 9, 10, 3, 4, 7, 3, 4, 5, 6, 8, 5, 7, 10, 1, 2, 5, 10, 5, 8, 9};
-
-    int len_row_ptrs = sizeof(expected_row_ptrs) / sizeof(expected_row_ptrs[0]);
-    int len_col_idxs = sizeof(expected_col_idxs) / sizeof(expected_col_idxs[0]);
+    bool expected_removed_k3[] = {false, false, false, false, false, false, false, false, false, false, false, true, true, true, true};
+    bool expected_removed_k4[] = {true, true, true, true, true, true, true, true, true, true, true, true, true, true, true};
 
     bool is_passing = true;
-    is_passing &= array_is_equal(k3_core->adjacency_matrix->ptr_rows, expected_row_ptrs, k3_core->num_vertices + 1, len_row_ptrs);
-    is_passing &= array_is_equal(k3_core->adjacency_matrix->idx_cols, expected_col_idxs, k3_core->adjacency_matrix->num_nnzs, len_col_idxs);
 
-    graph_delete(&k3_core);
+    bool* removed_vertices_k3 = get_vertices_not_in_k_core(undirected_graph, 3);
+    is_passing = is_passing && memcmp(removed_vertices_k3, expected_removed_k3, undirected_graph->num_vertices * sizeof(bool)) == 0;
+
+    bool* removed_vertices_k4 = get_vertices_not_in_k_core(undirected_graph, 4);
+    is_passing = is_passing && memcmp(removed_vertices_k4, expected_removed_k4, undirected_graph->num_vertices * sizeof(bool)) == 0;
+
+    free(removed_vertices_k3);
+    free(removed_vertices_k4);
     graph_delete(&undirected_graph);
 
     print_test_result(__FILE__, __func__, is_passing);

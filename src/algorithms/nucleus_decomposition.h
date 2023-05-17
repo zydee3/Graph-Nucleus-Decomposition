@@ -12,11 +12,6 @@
 #include "../utilities/stopwatch.h"
 #include "clique.h"
 
-typedef struct {
-    OrderedSet** s_map;
-    OrderedSet** r_map;
-} MappedCliques;
-
-void run_nucleus_decomposition_3_4(Graph* graph);
+void run_nucleus_decomposition(Graph* graph, int r, int s);
 
 #endif

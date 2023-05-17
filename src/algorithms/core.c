@@ -1,14 +1,33 @@
 #include "core.h"
 
 /**
+ * This class contains the partial implementation of the k-core
+ * algorithm. The k-core algorithm finds the k-core of a graph, which
+ * is the subgraph of the graph where each vertex has degree at least
+ * k. The provided function returns a boolean array where each index
+ * is true if the vertex is not in the k-core or false otherwise.
+ *
+ * It is often unnecessary to generate a new csr graph for the k-core
+ * algorithm as knowing which vertices are in the k-core is sufficient
+ * for many applications. This class provides a function to find the
+ * vertices not in the k-core of a graph.
+ */
+
+/**
  * @brief Sets the degree of a vertex to zero and queues it for
  * removal.
+ *
+ * Once the vertex is queued for removal, it will be removed from the
+ * graph and it's neighbors will be checked to see if they should be
+ * removed based on their updateddegree.
  *
  * @param vertex_id
  * @param k
  * @param vertex_degrees
  * @param removed_vertices
  * @param queue
+ *
+ *
  */
 static inline void _remove_less_than_k(vertex u, int k, int* vertex_degrees, bool* removed_vertices, Queue* queue) {
     assert(vertex_degrees != NULL);
@@ -20,35 +39,9 @@ static inline void _remove_less_than_k(vertex u, int k, int* vertex_degrees, boo
         return;
     }
 
-    printf("Removing %d (Degree: %d)\n", u, vertex_degrees[u]);
-
     vertex_degrees[u] = 0;
     queue_enqueue(queue, u);
     removed_vertices[u] = true;
-}
-
-/**
- * @brief Decreaments the degree of the vertex and queues it for
- * removal.
- *
- * Once the vertex is queued for removal, it will be removed from the
- * graph and it's neighbors will be checked to see if they should be
- * removed based on their degree.
- *
- * @param vertex_id
- * @param k
- * @param vertex_degrees
- * @param removed_vertices
- * @param queue
- */
-static inline void _decrease_and_remove_less_than_k(vertex u, int k, int* vertex_degrees, bool* removed_vertices, Queue* queue) {
-    if (removed_vertices[u] == true) {
-        return;
-    }
-
-    vertex_degrees[u]--;
-
-    _remove_less_than_k(u, k, vertex_degrees, removed_vertices, queue);
 }
 
 /**
@@ -66,7 +59,7 @@ bool* get_vertices_not_in_k_core(Graph* graph, int k) {
     bool* removed_vertices = calloc(graph->num_vertices, sizeof(bool));
 
     // Initial degree of each vertex.
-    int* vertex_degrees = graph_get_degrees(graph);
+    int* vertex_degrees = graph_get_out_degrees(graph);
 
     // Queue of vertices to be removed. Need to visit each neighbor.
     Queue* queue = queue_new(graph->num_vertices);
@@ -109,27 +102,4 @@ bool* get_vertices_not_in_k_core(Graph* graph, int k) {
     queue_delete(&queue);
 
     return removed_vertices;
-}
-
-/**
- * @brief Computes the k-core of the param graph and returns a new
- * graph with only the vertices and edges in the k-core.
- *
- * @param graph The graph to find the k-core of.
- * @param k The min degree of any vertex in the k-core of param graph.
- * @return Graph* The computed k-core of param graph.
- */
-Graph* compute_k_core(Graph* graph, int k) {
-    assert(graph != NULL);
-    assert(k > 0);
-
-    // Record for each vertex if it has been removed.
-    bool* removed_vertices = get_vertices_not_in_k_core(graph, k);
-
-    // Reduce the graph to only the vertices that are in the k-core.
-    Graph* k_core = graph_reduce(graph, removed_vertices);
-
-    free(removed_vertices);
-
-    return k_core;
 }

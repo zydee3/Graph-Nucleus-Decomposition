@@ -29,7 +29,7 @@ int queue_peek(Queue* queue);
 bool queue_contains(Queue* queue, int element);
 
 // Utility Functions
-int queue_is_empty(Queue* queue);
+bool queue_is_empty(Queue* queue);
 void queue_print(Queue* queue, bool should_print_newline);
 
 #endif

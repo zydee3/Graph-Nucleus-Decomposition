@@ -1,23 +1,5 @@
 #include "ordered_set.h"
 
-// Begin Generic Functions
-
-void* ordered_set_generic_copy(void* ref) {
-    return ordered_set_copy((OrderedSet*)ref);
-}
-
-void ordered_set_generic_delete(void** set) {
-    ordered_set_delete((OrderedSet**)set);
-}
-
-bool ordered_set_generic_is_equal(void* set_a, void* set_b) {
-    return ordered_set_is_equal((OrderedSet*)set_a, (OrderedSet*)set_b);
-}
-
-void ordered_set_generic_print(void* set) {
-    ordered_set_print((OrderedSet*)set, true);
-}
-
 // Begin Create and Delete Functions
 /**
  * @brief Creates a new OrderedSet with the given resize amount.
@@ -488,34 +470,6 @@ OrderedSet* ordered_set_symmetric_difference(OrderedSet* set_1, OrderedSet* set_
 }
 
 // End Operations Functions
-// Begin Morphing  Functions
-
-OrderedSet** ordered_set_as_array(GenericLinkedList** sets) {
-    assert(sets != NULL);
-    assert(*sets != NULL);
-
-    int num_sets = (*sets)->size;
-    OrderedSet** sets_array = calloc(num_sets, sizeof(OrderedSet*));
-
-    int idx_array = 0;
-    GenericNode* current_node = (*sets)->head;
-
-    while (current_node != NULL) {
-        OrderedSet* current_set = (OrderedSet*)current_node->data;
-        sets_array[idx_array] = current_set;
-
-        current_node->data = NULL;
-
-        current_node = current_node->next;
-        idx_array++;
-    }
-
-    generic_linked_list_delete(sets);
-
-    return sets_array;
-}
-
-// End Morphing Functions
 // Begin Utility Functions
 
 /**

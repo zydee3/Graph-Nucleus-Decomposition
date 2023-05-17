@@ -7,6 +7,5 @@
 #include "../utilities/array_util.h"
 
 bool* get_vertices_not_in_k_core(Graph* graph, int k);
-Graph* compute_k_core(Graph* graph, int k);
 
 #endif

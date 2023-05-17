@@ -63,7 +63,7 @@ CliqueSet* _find_four_cliques(Graph* graph) {
     CliqueSet* four_cliques = clique_set_new(clique_size, resize_value);
 
     // Generate a degree oriented graph
-    int* undirected_degrees = graph_get_degrees(graph);
+    int* undirected_degrees = graph_get_out_degrees(graph);
     Graph* directed_graph = graph_make_directed(graph, _compare_degrees, undirected_degrees);
 
     // Store these variables for easy access
